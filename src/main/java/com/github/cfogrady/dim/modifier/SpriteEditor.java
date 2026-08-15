@@ -37,6 +37,9 @@ public class SpriteEditor extends Stage {
     private boolean showGrid = true;
     private Color activeColor = Color.BLACK;
 
+    private int brushSize = 1;
+    private Color replaceColorTarget = null;
+
     private enum Tool {
         PENCIL("Pencil ✏"),
         ERASER("Eraser ❌"),
@@ -45,7 +48,14 @@ public class SpriteEditor extends Stage {
         LINE("Line ➖"),
         RECTANGLE("Rectangle ⬜"),
         CIRCLE("Circle ⚪"),
-        SELECT("Select ⛶");
+        SELECT("Select ⛶"),
+        BLUR("Blur 💧"),
+        BURN("Burn 🔥"),
+        DODGE("Dodge ☀️"),
+        LIGHTEN("Lighten 💡"),
+        DARKEN("Darken 🌙"),
+        FADE("Fade 🌫️"),
+        REPLACE_COLOR("Replace Color 🔄");
 
         private final String label;
         Tool(String label) { this.label = label; }
@@ -87,6 +97,8 @@ public class SpriteEditor extends Stage {
     private Button deselectBtn;
     private FlowPane customColorsPane;
     private final List<Color> customColors = new ArrayList<>();
+    private Label brushSizeLabel;
+    private Slider brushSizeSlider;
 
     public SpriteEditor(SpriteData.Sprite sprite, SpriteImageTranslator translator, SpriteReplacer replacer, Consumer<SpriteData.Sprite> onSave) {
         this.originalSprite = sprite;
@@ -225,6 +237,24 @@ public class SpriteEditor extends Stage {
             toolsBox.getChildren().add(btn);
         }
 
+        ScrollPane toolsScrollPane = new ScrollPane(toolsBox);
+        toolsScrollPane.setFitToWidth(true);
+        toolsScrollPane.setPrefHeight(250);
+        toolsScrollPane.setStyle("-fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0;");
+
+        brushSizeLabel = new Label("Brush Size: " + brushSize + "px");
+        brushSizeSlider = new Slider(1, 8, brushSize);
+        brushSizeSlider.setBlockIncrement(1);
+        brushSizeSlider.setMajorTickUnit(1);
+        brushSizeSlider.setMinorTickCount(0);
+        brushSizeSlider.setSnapToTicks(true);
+        brushSizeSlider.setShowTickMarks(true);
+        brushSizeSlider.setShowTickLabels(true);
+        brushSizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            brushSize = newVal.intValue();
+            brushSizeLabel.setText("Brush Size: " + brushSize + "px");
+        });
+
         fillShapeCheckbox = new CheckBox("Fill Shape");
         fillShapeCheckbox.setSelected(fillShape);
         fillShapeCheckbox.setOnAction(e -> fillShape = fillShapeCheckbox.isSelected());
@@ -248,7 +278,7 @@ public class SpriteEditor extends Stage {
         selectionOpsBox.getChildren().addAll(selLabel, fillSelectionBtn, clearSelectionBtn, deselectBtn);
         updateSelectionButtons();
 
-        leftSidebar.getChildren().addAll(toolsLabel, toolsBox, fillShapeCheckbox, selectionOpsBox);
+        leftSidebar.getChildren().addAll(toolsLabel, toolsScrollPane, new Separator(), brushSizeLabel, brushSizeSlider, fillShapeCheckbox, selectionOpsBox);
         root.setLeft(leftSidebar);
 
         // Right Sidebar: Color Picker & Palette
@@ -445,6 +475,17 @@ public class SpriteEditor extends Stage {
 
     private void updateToolOptions() {
         fillShapeCheckbox.setDisable(activeTool != Tool.RECTANGLE && activeTool != Tool.CIRCLE);
+        boolean usesBrushSize = (activeTool == Tool.PENCIL || activeTool == Tool.ERASER ||
+                                 activeTool == Tool.BLUR || activeTool == Tool.BURN ||
+                                 activeTool == Tool.DODGE || activeTool == Tool.LIGHTEN ||
+                                 activeTool == Tool.DARKEN || activeTool == Tool.FADE ||
+                                 activeTool == Tool.REPLACE_COLOR);
+        if (brushSizeSlider != null) {
+            brushSizeSlider.setDisable(!usesBrushSize);
+        }
+        if (brushSizeLabel != null) {
+            brushSizeLabel.setDisable(!usesBrushSize);
+        }
         updateSelectionButtons();
     }
 
@@ -593,6 +634,91 @@ public class SpriteEditor extends Stage {
     }
 
     // Canvas Interaction
+    private void applyToolAt(int px, int py) {
+        int radius = brushSize / 2;
+        boolean isSinglePixel = (brushSize == 1);
+
+        if (activeTool == Tool.REPLACE_COLOR && startX == px && startY == py) {
+            replaceColorTarget = pixels[px][py];
+        }
+
+        for (int dy = -radius; dy <= radius; dy++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                int nx = px + dx;
+                int ny = py + dy;
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    if (isSinglePixel || dx * dx + dy * dy <= radius * radius) {
+                        applyToolToPixel(nx, ny);
+                    }
+                }
+            }
+        }
+    }
+
+    private void applyToolToPixel(int x, int y) {
+        switch (activeTool) {
+            case PENCIL -> pixels[x][y] = activeColor;
+            case ERASER -> pixels[x][y] = null;
+            case LIGHTEN -> {
+                Color c = pixels[x][y];
+                if (c != null) {
+                    pixels[x][y] = Color.hsb(c.getHue(), c.getSaturation(), Math.min(1.0, c.getBrightness() + 0.04));
+                }
+            }
+            case DARKEN -> {
+                Color c = pixels[x][y];
+                if (c != null) {
+                    pixels[x][y] = Color.hsb(c.getHue(), c.getSaturation(), Math.max(0.0, c.getBrightness() - 0.04));
+                }
+            }
+            case BURN -> {
+                Color c = pixels[x][y];
+                if (c != null) {
+                    pixels[x][y] = Color.hsb(c.getHue(), Math.min(1.0, c.getSaturation() * 1.08), Math.max(0.0, c.getBrightness() - 0.04));
+                }
+            }
+            case DODGE -> {
+                Color c = pixels[x][y];
+                if (c != null) {
+                    pixels[x][y] = Color.hsb(c.getHue(), Math.max(0.0, c.getSaturation() * 0.92), Math.min(1.0, c.getBrightness() + 0.04));
+                }
+            }
+            case FADE -> {
+                Color c = pixels[x][y];
+                if (c != null) {
+                    pixels[x][y] = Color.hsb(c.getHue(), Math.max(0.0, c.getSaturation() - 0.04), c.getBrightness());
+                }
+            }
+            case BLUR -> {
+                double sumR = 0, sumG = 0, sumB = 0, count = 0;
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int nx = x + dx;
+                        int ny = y + dy;
+                        if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                            Color nc = pixels[nx][ny];
+                            if (nc != null) {
+                                sumR += nc.getRed();
+                                sumG += nc.getGreen();
+                                sumB += nc.getBlue();
+                                count++;
+                            }
+                        }
+                    }
+                }
+                if (count > 0) {
+                    pixels[x][y] = Color.color(sumR / count, sumG / count, sumB / count);
+                }
+            }
+            case REPLACE_COLOR -> {
+                if (isSameColor(pixels[x][y], replaceColorTarget)) {
+                    pixels[x][y] = activeColor;
+                }
+            }
+            default -> {}
+        }
+    }
+
     private void handleMousePressed(MouseEvent event) {
         int px = (int) (event.getX() / zoom);
         int py = (int) (event.getY() / zoom);
@@ -608,11 +734,14 @@ public class SpriteEditor extends Stage {
             startY = py;
             previewPixels.clear();
 
-            if (activeTool == Tool.PENCIL) {
-                pixels[px][py] = activeColor;
-                drawCanvas();
-            } else if (activeTool == Tool.ERASER) {
-                pixels[px][py] = null;
+            boolean isBrushTool = (activeTool == Tool.PENCIL || activeTool == Tool.ERASER ||
+                                   activeTool == Tool.BLUR || activeTool == Tool.BURN ||
+                                   activeTool == Tool.DODGE || activeTool == Tool.LIGHTEN ||
+                                   activeTool == Tool.DARKEN || activeTool == Tool.FADE ||
+                                   activeTool == Tool.REPLACE_COLOR);
+
+            if (isBrushTool) {
+                applyToolAt(px, py);
                 drawCanvas();
             } else if (activeTool == Tool.FILL) {
                 Color targetColor = pixels[px][py];
@@ -649,11 +778,14 @@ public class SpriteEditor extends Stage {
 
         coordsLabel.setText("X: " + px + " Y: " + py);
 
-        if (activeTool == Tool.PENCIL) {
-            pixels[px][py] = activeColor;
-            drawCanvas();
-        } else if (activeTool == Tool.ERASER) {
-            pixels[px][py] = null;
+        boolean isBrushTool = (activeTool == Tool.PENCIL || activeTool == Tool.ERASER ||
+                               activeTool == Tool.BLUR || activeTool == Tool.BURN ||
+                               activeTool == Tool.DODGE || activeTool == Tool.LIGHTEN ||
+                               activeTool == Tool.DARKEN || activeTool == Tool.FADE ||
+                               activeTool == Tool.REPLACE_COLOR);
+
+        if (isBrushTool) {
+            applyToolAt(px, py);
             drawCanvas();
         } else if (activeTool == Tool.DROPPER) {
             Color picked = pixels[px][py];
