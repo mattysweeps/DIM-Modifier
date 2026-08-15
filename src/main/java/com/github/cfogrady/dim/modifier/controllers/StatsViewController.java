@@ -137,6 +137,40 @@ public class StatsViewController implements Initializable {
         updateDimensionsLabel(sprite);
     }
 
+    private String getSpriteName() {
+        int stage = character.getStage();
+        boolean isBem = character instanceof com.github.cfogrady.dim.modifier.data.bem.BemCharacter;
+        
+        if (isBem || stage >= 2) {
+            switch (spriteOption) {
+                case 1: return "Idle 1";
+                case 2: return "Idle 2";
+                case 3: return "Walk 1";
+                case 4: return "Walk 2";
+                case 5: return "Run 1";
+                case 6: return "Run 2";
+                case 7: return "Exercise 1";
+                case 8: return "Exercise 2";
+                case 9: return "Happy";
+                case 10: return "Sleeping / Hurt";
+                case 11: return "Attacking";
+                case 12: return "Running from Battle";
+                case 13: return "Splash Background";
+                default: return "Unknown";
+            }
+        } else {
+            switch (spriteOption) {
+                case 1: return "Idle 1";
+                case 2: return "Idle 2";
+                case 3: return "Walk 1";
+                case 4: return "Happy";
+                case 5: return "Sleeping";
+                case 6: return "Splash Background";
+                default: return "Unknown";
+            }
+        }
+    }
+
     private void updateDimensionsLabel(SpriteData.Sprite sprite) {
         if (dimensionsLabel == null) return;
         List<SpriteData.SpriteDimensions> validDimensions;
@@ -153,7 +187,8 @@ public class StatsViewController implements Initializable {
             validDimStr.append(validDimensions.get(i).getWidth()).append("x").append(validDimensions.get(i).getHeight());
         }
 
-        dimensionsLabel.setText(String.format("Size: %dx%d (Expected: %s)", sprite.getWidth(), sprite.getHeight(), validDimStr.toString()));
+        String frameName = getSpriteName();
+        dimensionsLabel.setText(String.format("%s - Size: %dx%d (Expected: %s)", frameName, sprite.getWidth(), sprite.getHeight(), validDimStr.toString()));
     }
 
     private void replaceCharacterSprite(SpriteData.Sprite newSprite) {

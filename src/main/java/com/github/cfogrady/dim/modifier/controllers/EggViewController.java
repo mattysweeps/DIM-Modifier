@@ -127,13 +127,27 @@ public class EggViewController implements Initializable {
         getEggList().set(eggSelection, newSprite);
     }
 
+    private String getEggFrameName() {
+        switch (eggSelection) {
+            case 0: return "Rocking Right";
+            case 1: return "Rocking Left";
+            case 2: return "Crack at Top";
+            case 3: return "Squishing / Crack Growing";
+            case 4: return "Regular Height / Shell Cracking";
+            case 5: return "Squished";
+            case 6: return "Ready to Hatch";
+            case 7: return "Hatching (Baby Poking Head)";
+            default: return "Unknown";
+        }
+    }
+
     private void refreshEggSprite() {
         List<SpriteData.Sprite> eggs = getEggList();
         if(eggs == null || eggs.isEmpty()) return;
         if(eggSelection >= eggs.size()) {
             eggSelection = 0;
         }
-        eggIndexLabel.setText(String.format("Egg %d of %d", eggSelection + 1, eggs.size()));
+        eggIndexLabel.setText(String.format("Egg %d of %d (%s)", eggSelection + 1, eggs.size(), getEggFrameName()));
         prevEggButton.setDisable(eggs.size() <= 1);
         nextEggButton.setDisable(eggs.size() <= 1);
         eggSpritesView.setImage(spriteImageTranslator.loadImageFromSprite(getEggSprite()));
