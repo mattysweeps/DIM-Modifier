@@ -76,10 +76,11 @@ public class EggViewController implements Initializable {
             }
         });
         eggSpriteContainer.setOnMouseClicked(e -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            if(newSprite != null) {
-                replaceSprite(newSprite);
-            }
+            spriteReplacer.handleSelectAndEdit(e,
+                () -> getEggList().get(eggSelection),
+                spriteReplacer::loadSpriteFromFileChooser,
+                this::replaceSprite
+            );
         });
         eggSpriteContainer.setOnDragDropped(e -> {
             if(e.getDragboard().hasFiles()) {

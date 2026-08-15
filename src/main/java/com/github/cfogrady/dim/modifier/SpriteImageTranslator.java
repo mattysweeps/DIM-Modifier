@@ -305,7 +305,14 @@ public class SpriteImageTranslator {
         return img;
     }
 
-    private byte[] convertToR5G6B5(PixelReader pixelReader, int width, int height) {
+    public SpriteData.Sprite translateImageToSprite(Image image) {
+        int width = (int) image.getWidth();
+        int height = (int) image.getHeight();
+        byte[] pixelData = convertToR5G6B5(image.getPixelReader(), width, height);
+        return SpriteData.Sprite.builder().width(width).height(height).pixelData(pixelData).build();
+    }
+
+    public byte[] convertToR5G6B5(PixelReader pixelReader, int width, int height) {
         byte[] bytes = new byte[width*height*2];
         for(int y = 0; y < height; y++) {
             for(int x = 0; x < width; x++) {

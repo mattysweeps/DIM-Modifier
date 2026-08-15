@@ -137,10 +137,11 @@ public class BemSystemViewController implements Initializable {
             refreshBackground();
         });
         backgroundSpriteContainer.setOnMouseClicked(e -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            if(newSprite != null) {
-                replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(80).height(160).build(), appState::setBackgroundSprite, this::refreshBackground);
-            }
+            spriteReplacer.handleSelectAndEdit(e,
+                appState::getSelectedBackground,
+                spriteReplacer::loadSpriteFromFileChooser,
+                newSprite -> replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(80).height(160).build(), appState::setBackgroundSprite, this::refreshBackground)
+            );
         });
         backgroundSpriteContainer.setOnDragDropped( e-> {
             if(e.getDragboard().hasFiles()) {
@@ -197,10 +198,11 @@ public class BemSystemViewController implements Initializable {
             refreshTextSprite();
         });
         textSpriteContainer.setOnMouseClicked(e -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            if(newSprite != null) {
-                replaceSprite(newSprite, getTextSprite().getSpriteDimensions(), this::setTextSprite, this::refreshTextSprite);
-            }
+            spriteReplacer.handleSelectAndEdit(e,
+                this::getTextSprite,
+                spriteReplacer::loadSpriteFromFileChooser,
+                newSprite -> replaceSprite(newSprite, getTextSprite().getSpriteDimensions(), this::setTextSprite, this::refreshTextSprite)
+            );
         });
         textSpriteContainer.setOnDragDropped( e-> {
             if(e.getDragboard().hasFiles()) {
@@ -272,10 +274,11 @@ public class BemSystemViewController implements Initializable {
             refreshStageSprite();
         });
         stageSpriteContainer.setOnMouseClicked(e -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            if(newSprite != null) {
-                replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(78).height(18).build(), this::setStageSprite, this::refreshStageSprite);
-            }
+            spriteReplacer.handleSelectAndEdit(e,
+                this::getStageSprite,
+                spriteReplacer::loadSpriteFromFileChooser,
+                newSprite -> replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(78).height(18).build(), this::setStageSprite, this::refreshStageSprite)
+            );
         });
         stageSpriteContainer.setOnDragDropped( e-> {
             if(e.getDragboard().hasFiles()) {
@@ -328,10 +331,11 @@ public class BemSystemViewController implements Initializable {
             refreshAttributeSprite();
         });
         attributeSpriteContainer.setOnMouseClicked(e -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            if(newSprite != null) {
-                replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(30).height(16).build(), this::setAttributeSprite, this::refreshAttributeSprite);
-            }
+            spriteReplacer.handleSelectAndEdit(e,
+                this::getAttributeSprite,
+                spriteReplacer::loadSpriteFromFileChooser,
+                newSprite -> replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(30).height(16).build(), this::setAttributeSprite, this::refreshAttributeSprite)
+            );
         });
         attributeSpriteContainer.setOnDragDropped( e-> {
             if(e.getDragboard().hasFiles()) {
@@ -371,10 +375,11 @@ public class BemSystemViewController implements Initializable {
 
     private void initializeLogoSprites() {
         iconSpriteContainer.setOnMouseClicked(e -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            if(newSprite != null) {
-                replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(42).height(42).build(), appState.getCardData().getCardSprites()::setLogo, this::refreshLogoSprite);
-            }
+            spriteReplacer.handleSelectAndEdit(e,
+                appState.getCardData().getCardSprites()::getLogo,
+                spriteReplacer::loadSpriteFromFileChooser,
+                newSprite -> replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(42).height(42).build(), appState.getCardData().getCardSprites()::setLogo, this::refreshLogoSprite)
+            );
         });
         iconSpriteContainer.setOnDragDropped( e-> {
             if(e.getDragboard().hasFiles()) {
@@ -419,10 +424,11 @@ public class BemSystemViewController implements Initializable {
             refreshHitSprite();
         });
         hitSpriteContainer.setOnMouseClicked(e -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            if(newSprite != null) {
-                replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(61).height(57).build(), this::setHitSprite, this::refreshHitSprite);
-            }
+            spriteReplacer.handleSelectAndEdit(e,
+                this::getHitSprite,
+                spriteReplacer::loadSpriteFromFileChooser,
+                newSprite -> replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(61).height(57).build(), this::setHitSprite, this::refreshHitSprite)
+            );
         });
         hitSpriteContainer.setOnDragDropped( e-> {
             if(e.getDragboard().hasFiles()) {
@@ -475,10 +481,11 @@ public class BemSystemViewController implements Initializable {
             refreshSmallAttackSprite();
         });
         smallAttackSpriteContainer.setOnMouseClicked(e -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            if(newSprite != null) {
-                replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(20).height(20).build(), this::setSmallAttackSprite, this::refreshSmallAttackSprite);
-            }
+            spriteReplacer.handleSelectAndEdit(e,
+                this::getSmallAttackSprite,
+                spriteReplacer::loadSpriteFromFileChooser,
+                newSprite -> replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(20).height(20).build(), this::setSmallAttackSprite, this::refreshSmallAttackSprite)
+            );
         });
         smallAttackSpriteContainer.setOnDragDropped( e-> {
             if(e.getDragboard().hasFiles()) {
@@ -533,10 +540,11 @@ public class BemSystemViewController implements Initializable {
             refreshBigAttackSprite();
         });
         bigAttackSpriteContainer.setOnMouseClicked(e -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            if(newSprite != null) {
-                replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(34).height(44).build(), this::setBigAttackSprite, this::refreshBigAttackSprite);
-            }
+            spriteReplacer.handleSelectAndEdit(e,
+                this::getBigAttackSprite,
+                spriteReplacer::loadSpriteFromFileChooser,
+                newSprite -> replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(34).height(44).build(), this::setBigAttackSprite, this::refreshBigAttackSprite)
+            );
         });
         bigAttackSpriteContainer.setOnDragDropped( e-> {
             if(e.getDragboard().hasFiles()) {

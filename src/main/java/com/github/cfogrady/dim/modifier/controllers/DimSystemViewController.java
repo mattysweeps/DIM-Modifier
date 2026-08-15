@@ -54,10 +54,11 @@ public class DimSystemViewController implements Initializable {
 
     private void initializeBackground() {
         backgroundSpriteContainer.setOnMouseClicked(e -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            if(newSprite != null) {
-                replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(80).height(160).build(), appState::setBackgroundSprite, this::refreshBackground);
-            }
+            spriteReplacer.handleSelectAndEdit(e,
+                appState::getSelectedBackground,
+                spriteReplacer::loadSpriteFromFileChooser,
+                newSprite -> replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(80).height(160).build(), appState::setBackgroundSprite, this::refreshBackground)
+            );
         });
         backgroundSpriteContainer.setOnDragDropped( e-> {
             if(e.getDragboard().hasFiles()) {
@@ -101,10 +102,11 @@ public class DimSystemViewController implements Initializable {
 
     private void initializeLogoSprites() {
         iconSpriteContainer.setOnMouseClicked(e -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            if(newSprite != null) {
-                replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(42).height(42).build(), appState.getCardData().getCardSprites()::setLogo, this::refreshLogoSprite);
-            }
+            spriteReplacer.handleSelectAndEdit(e,
+                appState.getCardData().getCardSprites()::getLogo,
+                spriteReplacer::loadSpriteFromFileChooser,
+                newSprite -> replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(42).height(42).build(), appState.getCardData().getCardSprites()::setLogo, this::refreshLogoSprite)
+            );
         });
         iconSpriteContainer.setOnDragDropped( e-> {
             if(e.getDragboard().hasFiles()) {

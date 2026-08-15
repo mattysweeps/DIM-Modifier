@@ -152,10 +152,11 @@ public class CharacterViewController implements Initializable {
         nameBox.getChildren().clear();
         nameBox.getChildren().add(imageView);
         nameBox.setOnMouseClicked(event -> {
-            SpriteData.Sprite newNameSprite = spriteReplacer.replaceSprite(nameSprite, false, true);
-            if(newNameSprite != null) {
-                replaceNameSprite(character, newNameSprite);
-            }
+            spriteReplacer.handleSelectAndEdit(event,
+                () -> character.getSprites().get(0),
+                () -> spriteReplacer.replaceSprite(nameSprite, false, true),
+                newNameSprite -> replaceNameSprite(character, newNameSprite)
+            );
         });
         nameBox.setOnDragDropped( e-> {
             if(e.getDragboard().hasFiles()) {

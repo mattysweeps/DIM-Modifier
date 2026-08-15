@@ -119,8 +119,11 @@ public class StatsViewController implements Initializable {
             }
         });
         backgroundStackPane.setOnMouseClicked(click -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            replaceCharacterSprite(newSprite);
+            spriteReplacer.handleSelectAndEdit(click,
+                () -> character.getSprites().get(spriteOption),
+                spriteReplacer::loadSpriteFromFileChooser,
+                this::replaceCharacterSprite
+            );
         });
     }
 
