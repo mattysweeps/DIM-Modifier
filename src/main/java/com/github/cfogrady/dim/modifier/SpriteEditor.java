@@ -71,6 +71,14 @@ public class SpriteEditor extends Stage {
     private int selectMinY = 0;
     private int selectMaxX = 0;
     private int selectMaxY = 0;
+    private boolean isMovingSelection = false;
+    private Color[][] selectionBuffer = null;
+    private int origSelectMinX;
+    private int origSelectMinY;
+    private int origSelectWidth;
+    private int origSelectHeight;
+    private int dragStartX;
+    private int dragStartY;
 
     // Drawing states
     private boolean isDrawing = false;
@@ -719,11 +727,52 @@ public class SpriteEditor extends Stage {
         }
     }
 
+    private void updateSelectionMovePreview(int dx, int dy) {
+        previewPixels.clear();
+        for (int x = 0; x < origSelectWidth; x++) {
+            for (int y = 0; y < origSelectHeight; y++) {
+                Color c = selectionBuffer[x][y];
+                int targetX = origSelectMinX + x + dx;
+                int targetY = origSelectMinY + y + dy;
+                if (targetX >= 0 && targetX < width && targetY >= 0 && targetY < height) {
+                    previewPixels.put(new Point(targetX, targetY), c);
+                }
+            }
+        }
+    }
+
     private void handleMousePressed(MouseEvent event) {
         int px = (int) (event.getX() / zoom);
         int py = (int) (event.getY() / zoom);
 
         if (px < 0 || px >= width || py < 0 || py >= height) {
+            return;
+        }
+
+        if (event.getButton() == MouseButton.SECONDARY) {
+            if (activeTool == Tool.SELECT && hasSelection &&
+                px >= selectMinX && px <= selectMaxX && py >= selectMinY && py <= selectMaxY) {
+                
+                saveState();
+                isMovingSelection = true;
+                isDrawing = true;
+                dragStartX = px;
+                dragStartY = py;
+                origSelectMinX = selectMinX;
+                origSelectMinY = selectMinY;
+                origSelectWidth = selectMaxX - selectMinX + 1;
+                origSelectHeight = selectMaxY - selectMinY + 1;
+                
+                selectionBuffer = new Color[origSelectWidth][origSelectHeight];
+                for (int x = 0; x < origSelectWidth; x++) {
+                    for (int y = 0; y < origSelectHeight; y++) {
+                        selectionBuffer[x][y] = pixels[origSelectMinX + x][origSelectMinY + y];
+                        pixels[origSelectMinX + x][origSelectMinY + y] = null;
+                    }
+                }
+                updateSelectionMovePreview(0, 0);
+                drawCanvas();
+            }
             return;
         }
 
@@ -778,6 +827,20 @@ public class SpriteEditor extends Stage {
 
         coordsLabel.setText("X: " + px + " Y: " + py);
 
+        if (isMovingSelection) {
+            int dx = px - dragStartX;
+            int dy = py - dragStartY;
+            
+            selectMinX = origSelectMinX + dx;
+            selectMinY = origSelectMinY + dy;
+            selectMaxX = selectMinX + origSelectWidth - 1;
+            selectMaxY = selectMinY + origSelectHeight - 1;
+            
+            updateSelectionMovePreview(dx, dy);
+            drawCanvas();
+            return;
+        }
+
         boolean isBrushTool = (activeTool == Tool.PENCIL || activeTool == Tool.ERASER ||
                                activeTool == Tool.BLUR || activeTool == Tool.BURN ||
                                activeTool == Tool.DODGE || activeTool == Tool.LIGHTEN ||
@@ -825,6 +888,36 @@ public class SpriteEditor extends Stage {
     private void handleMouseReleased(MouseEvent event) {
         if (!isDrawing) return;
         isDrawing = false;
+
+        if (isMovingSelection) {
+            int px = (int) (event.getX() / zoom);
+            int py = (int) (event.getY() / zoom);
+            px = Math.max(0, Math.min(width - 1, px));
+            py = Math.max(0, Math.min(height - 1, py));
+
+            int dx = px - dragStartX;
+            int dy = py - dragStartY;
+            
+            for (int x = 0; x < origSelectWidth; x++) {
+                for (int y = 0; y < origSelectHeight; y++) {
+                    int targetX = origSelectMinX + x + dx;
+                    int targetY = origSelectMinY + y + dy;
+                    if (targetX >= 0 && targetX < width && targetY >= 0 && targetY < height) {
+                        pixels[targetX][targetY] = selectionBuffer[x][y];
+                    }
+                }
+            }
+            
+            selectMinX = Math.max(0, Math.min(width - 1, origSelectMinX + dx));
+            selectMinY = Math.max(0, Math.min(height - 1, origSelectMinY + dy));
+            selectMaxX = Math.max(0, Math.min(width - 1, selectMinX + origSelectWidth - 1));
+            selectMaxY = Math.max(0, Math.min(height - 1, selectMinY + origSelectHeight - 1));
+            
+            previewPixels.clear();
+            selectionBuffer = null;
+            drawCanvas();
+            return;
+        }
 
         // Apply preview pixels for shape tools
         if (activeTool == Tool.LINE || activeTool == Tool.RECTANGLE || activeTool == Tool.CIRCLE) {
