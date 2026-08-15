@@ -1,6 +1,8 @@
 package com.github.cfogrady.dim.modifier;
 
 import com.github.cfogrady.vb.dim.sprite.SpriteData;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -31,7 +33,9 @@ public class SpriteEditor extends Stage {
 
     private final int width;
     private final int height;
-    private Color[][] pixels;
+    private List<Layer> layers;
+    private int activeLayerIndex = 0;
+    private ObservableList<Layer> observableLayers;
 
     private int zoom = 16;
     private boolean showGrid = true;
@@ -55,7 +59,8 @@ public class SpriteEditor extends Stage {
         LIGHTEN("Lighten 💡"),
         DARKEN("Darken 🌙"),
         FADE("Fade 🌫️"),
-        REPLACE_COLOR("Replace Color 🔄");
+        REPLACE_COLOR("Replace Color 🔄"),
+        HUE_SHIFT("Change Hue 🌈");
 
         private final String label;
         Tool(String label) { this.label = label; }
@@ -87,8 +92,8 @@ public class SpriteEditor extends Stage {
     private Map<Point, Color> previewPixels = new HashMap<>();
 
     // Undo / Redo stacks
-    private final Stack<Color[][]> undoStack = new Stack<>();
-    private final Stack<Color[][]> redoStack = new Stack<>();
+    private final Stack<List<Layer>> undoStack = new Stack<>();
+    private final Stack<List<Layer>> redoStack = new Stack<>();
 
     // UI Controls
     private Canvas canvas;
@@ -107,6 +112,11 @@ public class SpriteEditor extends Stage {
     private final List<Color> customColors = new ArrayList<>();
     private Label brushSizeLabel;
     private Slider brushSizeSlider;
+    private ListView<Layer> layersListView;
+    private Label hueLabel;
+    private Slider hueSlider;
+    private Button applyHueBtn;
+    private VBox hueBox;
 
     public SpriteEditor(SpriteData.Sprite sprite, SpriteImageTranslator translator, SpriteReplacer replacer, Consumer<SpriteData.Sprite> onSave) {
         this.originalSprite = sprite;
@@ -119,22 +129,28 @@ public class SpriteEditor extends Stage {
         initModality(Modality.APPLICATION_MODAL);
         setTitle("Sprite Editor - " + width + "x" + height);
 
-        // Load pixels
+        // Load pixels into a base layer
+        layers = new ArrayList<>();
+        observableLayers = FXCollections.observableList(layers);
+        Layer baseLayer = new Layer("Base Layer", width, height);
+
         Image image = translator.loadImageFromSprite(sprite);
-        pixels = new Color[width][height];
+        Color[][] basePixels = baseLayer.getPixels();
         PixelReader reader = image.getPixelReader();
         if (reader != null) {
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
                     Color c = reader.getColor(x, y);
                     if (c.getOpacity() == 0.0) {
-                        pixels[x][y] = null; // transparent
+                        basePixels[x][y] = null; // transparent
                     } else {
-                        pixels[x][y] = c;
+                        basePixels[x][y] = c;
                     }
                 }
             }
         }
+        layers.add(baseLayer);
+        activeLayerIndex = 0;
 
         // Set default zoom based on image size
         if (width > 120 || height > 120) {
@@ -166,12 +182,13 @@ public class SpriteEditor extends Stage {
         redoButton = new Button("↪ Redo");
         redoButton.setOnAction(e -> redo());
 
-        Button clearButton = new Button("🗑 Clear Canvas");
+        Button clearButton = new Button("🗑 Clear Layer");
         clearButton.setOnAction(e -> {
             saveState();
+            Color[][] activePixels = layers.get(activeLayerIndex).getPixels();
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
-                    pixels[x][y] = null;
+                    activePixels[x][y] = null;
                 }
             }
             drawCanvas();
@@ -263,6 +280,26 @@ public class SpriteEditor extends Stage {
             brushSizeLabel.setText("Brush Size: " + brushSize + "px");
         });
 
+        hueLabel = new Label("Hue Shift: 0°");
+        hueSlider = new Slider(-180, 180, 0);
+        hueSlider.setBlockIncrement(10);
+        hueSlider.setMajorTickUnit(90);
+        hueSlider.setMinorTickCount(1);
+        hueSlider.setShowTickMarks(true);
+        hueSlider.setShowTickLabels(true);
+        hueSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            hueLabel.setText("Hue Shift: " + newVal.intValue() + "°");
+        });
+
+        applyHueBtn = new Button("Apply Hue Shift");
+        applyHueBtn.setMaxWidth(Double.MAX_VALUE);
+        applyHueBtn.setOnAction(e -> applyGlobalHueShift(hueSlider.getValue()));
+
+        hueBox = new VBox(5, hueLabel, hueSlider, applyHueBtn);
+        hueBox.setPadding(new Insets(5));
+        hueBox.setBorder(new Border(new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+        hueBox.setDisable(true);
+
         fillShapeCheckbox = new CheckBox("Fill Shape");
         fillShapeCheckbox.setSelected(fillShape);
         fillShapeCheckbox.setOnAction(e -> fillShape = fillShapeCheckbox.isSelected());
@@ -286,7 +323,7 @@ public class SpriteEditor extends Stage {
         selectionOpsBox.getChildren().addAll(selLabel, fillSelectionBtn, clearSelectionBtn, deselectBtn);
         updateSelectionButtons();
 
-        leftSidebar.getChildren().addAll(toolsLabel, toolsScrollPane, new Separator(), brushSizeLabel, brushSizeSlider, fillShapeCheckbox, selectionOpsBox);
+        leftSidebar.getChildren().addAll(toolsLabel, toolsScrollPane, new Separator(), brushSizeLabel, brushSizeSlider, new Separator(), hueBox, fillShapeCheckbox, selectionOpsBox);
         root.setLeft(leftSidebar);
 
         // Right Sidebar: Color Picker & Palette
@@ -326,7 +363,7 @@ public class SpriteEditor extends Stage {
         // Palette TabPane
         TabPane paletteTabPane = new TabPane();
         paletteTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        paletteTabPane.setPrefHeight(300);
+        paletteTabPane.setPrefHeight(200);
 
         Tab charTab = new Tab("Characters");
         FlowPane charColorsPane = new FlowPane(4, 4);
@@ -358,7 +395,90 @@ public class SpriteEditor extends Stage {
         populatePalette(charColorsPane, charColors);
         populatePalette(sysColorsPane, sysColors);
 
-        rightSidebar.getChildren().addAll(colorLabel, activeColorBox, hexBox, addPaletteBtn, paletteTabPane);
+        TitledPane layersPane = new TitledPane();
+        layersPane.setText("Layers");
+        layersPane.setCollapsible(false);
+
+        VBox layersBox = new VBox(5);
+        layersBox.setPadding(new Insets(5));
+
+        HBox layerButtons = new HBox(5);
+        layerButtons.setAlignment(Pos.CENTER);
+        Button addLayerBtn = new Button("➕");
+        addLayerBtn.setTooltip(new Tooltip("Add Layer"));
+        addLayerBtn.setOnAction(e -> addLayer());
+
+        Button removeLayerBtn = new Button("❌");
+        removeLayerBtn.setTooltip(new Tooltip("Remove Layer"));
+        removeLayerBtn.setOnAction(e -> removeLayer());
+
+        Button moveUpLayerBtn = new Button("▲");
+        moveUpLayerBtn.setTooltip(new Tooltip("Move Layer Up"));
+        moveUpLayerBtn.setOnAction(e -> moveLayerUp());
+
+        Button moveDownLayerBtn = new Button("▼");
+        moveDownLayerBtn.setTooltip(new Tooltip("Move Layer Down"));
+        moveDownLayerBtn.setOnAction(e -> moveLayerDown());
+
+        Button dupLayerBtn = new Button("📋");
+        dupLayerBtn.setTooltip(new Tooltip("Duplicate Layer"));
+        dupLayerBtn.setOnAction(e -> duplicateLayer());
+
+        layerButtons.getChildren().addAll(addLayerBtn, removeLayerBtn, moveUpLayerBtn, moveDownLayerBtn, dupLayerBtn);
+
+        layersListView = new ListView<>(observableLayers);
+        layersListView.setPrefHeight(100);
+
+        layersListView.setCellFactory(lv -> new ListCell<Layer>() {
+            @Override
+            protected void updateItem(Layer layer, boolean empty) {
+                super.updateItem(layer, empty);
+                if (empty || layer == null) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    HBox box = new HBox(10);
+                    box.setAlignment(Pos.CENTER_LEFT);
+
+                    CheckBox visibleCheckbox = new CheckBox();
+                    visibleCheckbox.setSelected(layer.isVisible());
+                    visibleCheckbox.setOnAction(e -> {
+                        layer.setVisible(visibleCheckbox.isSelected());
+                        drawCanvas();
+                    });
+
+                    Label nameLabel = new Label(layer.getName());
+                    nameLabel.setOnMouseClicked(click -> {
+                        if (click.getClickCount() == 2) {
+                            TextInputDialog dialog = new TextInputDialog(layer.getName());
+                            dialog.setTitle("Rename Layer");
+                            dialog.setHeaderText("Enter new name for " + layer.getName() + ":");
+                            dialog.showAndWait().ifPresent(newName -> {
+                                layer.setName(newName);
+                                nameLabel.setText(newName);
+                                layersListView.refresh();
+                            });
+                        }
+                    });
+
+                    box.getChildren().addAll(visibleCheckbox, nameLabel);
+                    setGraphic(box);
+                }
+            }
+        });
+
+        layersListView.getSelectionModel().selectedIndexProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal.intValue() >= 0) {
+                activeLayerIndex = newVal.intValue();
+            }
+        });
+
+        layersListView.getSelectionModel().select(activeLayerIndex);
+
+        layersBox.getChildren().addAll(layerButtons, layersListView);
+        layersPane.setContent(layersBox);
+
+        rightSidebar.getChildren().addAll(colorLabel, activeColorBox, hexBox, addPaletteBtn, paletteTabPane, layersPane);
         root.setRight(rightSidebar);
 
         // Bottom Bar: Coordinates, Info, Cancel/Save
@@ -487,12 +607,15 @@ public class SpriteEditor extends Stage {
                                  activeTool == Tool.BLUR || activeTool == Tool.BURN ||
                                  activeTool == Tool.DODGE || activeTool == Tool.LIGHTEN ||
                                  activeTool == Tool.DARKEN || activeTool == Tool.FADE ||
-                                 activeTool == Tool.REPLACE_COLOR);
+                                 activeTool == Tool.REPLACE_COLOR || activeTool == Tool.HUE_SHIFT);
         if (brushSizeSlider != null) {
             brushSizeSlider.setDisable(!usesBrushSize);
         }
         if (brushSizeLabel != null) {
             brushSizeLabel.setDisable(!usesBrushSize);
+        }
+        if (hueBox != null) {
+            hueBox.setDisable(activeTool != Tool.HUE_SHIFT);
         }
         updateSelectionButtons();
     }
@@ -504,8 +627,38 @@ public class SpriteEditor extends Stage {
         deselectBtn.setDisable(!selectActive);
     }
 
+    private void applyGlobalHueShift(double angle) {
+        if (angle == 0) return;
+        saveState();
+        Color[][] activePixels = layers.get(activeLayerIndex).getPixels();
+
+        int startX = 0, endX = width - 1;
+        int startY = 0, endY = height - 1;
+        if (hasSelection) {
+            startX = selectMinX;
+            endX = selectMaxX;
+            startY = selectMinY;
+            endY = selectMaxY;
+        }
+
+        for (int x = startX; x <= endX; x++) {
+            for (int y = startY; y <= endY; y++) {
+                Color c = activePixels[x][y];
+                if (c != null && c.getOpacity() > 0.0) {
+                    double originalHue = c.getHue();
+                    double newHue = (originalHue + angle) % 360.0;
+                    if (newHue < 0) {
+                        newHue += 360.0;
+                    }
+                    activePixels[x][y] = Color.hsb(newHue, c.getSaturation(), c.getBrightness(), c.getOpacity());
+                }
+            }
+        }
+        drawCanvas();
+    }
+
     private void saveState() {
-        undoStack.push(clonePixels(pixels));
+        undoStack.push(cloneLayers(layers));
         redoStack.clear();
         if (undoStack.size() > 50) {
             undoStack.remove(0);
@@ -513,28 +666,47 @@ public class SpriteEditor extends Stage {
         updateUndoRedoButtons();
     }
 
-    private Color[][] clonePixels(Color[][] source) {
-        Color[][] copy = new Color[width][height];
-        for (int i = 0; i < width; i++) {
-            System.arraycopy(source[i], 0, copy[i], 0, height);
+    private List<Layer> cloneLayers(List<Layer> source) {
+        List<Layer> copy = new ArrayList<>();
+        for (Layer layer : source) {
+            Layer clonedLayer = new Layer(layer.getName(), width, height);
+            clonedLayer.setVisible(layer.isVisible());
+            Color[][] srcPixels = layer.getPixels();
+            Color[][] destPixels = clonedLayer.getPixels();
+            for (int i = 0; i < width; i++) {
+                System.arraycopy(srcPixels[i], 0, destPixels[i], 0, height);
+            }
+            copy.add(clonedLayer);
         }
         return copy;
     }
 
     private void undo() {
         if (!undoStack.isEmpty()) {
-            redoStack.push(clonePixels(pixels));
-            pixels = undoStack.pop();
+            redoStack.push(cloneLayers(layers));
+            layers.clear();
+            layers.addAll(undoStack.pop());
+            if (activeLayerIndex >= layers.size()) {
+                activeLayerIndex = layers.size() - 1;
+            }
             drawCanvas();
+            layersListView.refresh();
+            layersListView.getSelectionModel().select(activeLayerIndex);
             updateUndoRedoButtons();
         }
     }
 
     private void redo() {
         if (!redoStack.isEmpty()) {
-            undoStack.push(clonePixels(pixels));
-            pixels = redoStack.pop();
+            undoStack.push(cloneLayers(layers));
+            layers.clear();
+            layers.addAll(redoStack.pop());
+            if (activeLayerIndex >= layers.size()) {
+                activeLayerIndex = layers.size() - 1;
+            }
             drawCanvas();
+            layersListView.refresh();
+            layersListView.getSelectionModel().select(activeLayerIndex);
             updateUndoRedoButtons();
         }
     }
@@ -548,9 +720,10 @@ public class SpriteEditor extends Stage {
     private void fillSelection() {
         if (!hasSelection) return;
         saveState();
+        Color[][] activePixels = layers.get(activeLayerIndex).getPixels();
         for (int x = selectMinX; x <= selectMaxX; x++) {
             for (int y = selectMinY; y <= selectMaxY; y++) {
-                pixels[x][y] = activeColor;
+                activePixels[x][y] = activeColor;
             }
         }
         drawCanvas();
@@ -559,9 +732,10 @@ public class SpriteEditor extends Stage {
     private void clearSelectionPixels() {
         if (!hasSelection) return;
         saveState();
+        Color[][] activePixels = layers.get(activeLayerIndex).getPixels();
         for (int x = selectMinX; x <= selectMaxX; x++) {
             for (int y = selectMinY; y <= selectMaxY; y++) {
-                pixels[x][y] = null;
+                activePixels[x][y] = null;
             }
         }
         drawCanvas();
@@ -580,18 +754,25 @@ public class SpriteEditor extends Stage {
         // Draw pixel cells
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                Color color = pixels[x][y];
-                if (color == null) {
-                    // Checkerboard
-                    if (((x + y) % 2) == 0) {
-                        gc.setFill(Color.web("#dcdcdc"));
-                    } else {
-                        gc.setFill(Color.web("#f5f5f5"));
-                    }
+                // Checkerboard
+                if (((x + y) % 2) == 0) {
+                    gc.setFill(Color.web("#dcdcdc"));
                 } else {
-                    gc.setFill(color);
+                    gc.setFill(Color.web("#f5f5f5"));
                 }
                 gc.fillRect(x * zoom, y * zoom, zoom, zoom);
+
+                // Composite layers from bottom (size - 1) to top (0)
+                for (int l = layers.size() - 1; l >= 0; l--) {
+                    Layer layer = layers.get(l);
+                    if (layer.isVisible()) {
+                        Color color = layer.getPixels()[x][y];
+                        if (color != null && color.getOpacity() > 0.0) {
+                            gc.setFill(color);
+                            gc.fillRect(x * zoom, y * zoom, zoom, zoom);
+                        }
+                    }
+                }
             }
         }
 
@@ -646,8 +827,9 @@ public class SpriteEditor extends Stage {
         int radius = brushSize / 2;
         boolean isSinglePixel = (brushSize == 1);
 
+        Color[][] activePixels = layers.get(activeLayerIndex).getPixels();
         if (activeTool == Tool.REPLACE_COLOR && startX == px && startY == py) {
-            replaceColorTarget = pixels[px][py];
+            replaceColorTarget = activePixels[px][py];
         }
 
         for (int dy = -radius; dy <= radius; dy++) {
@@ -664,37 +846,38 @@ public class SpriteEditor extends Stage {
     }
 
     private void applyToolToPixel(int x, int y) {
+        Color[][] activePixels = layers.get(activeLayerIndex).getPixels();
         switch (activeTool) {
-            case PENCIL -> pixels[x][y] = activeColor;
-            case ERASER -> pixels[x][y] = null;
+            case PENCIL -> activePixels[x][y] = activeColor;
+            case ERASER -> activePixels[x][y] = null;
             case LIGHTEN -> {
-                Color c = pixels[x][y];
+                Color c = activePixels[x][y];
                 if (c != null) {
-                    pixels[x][y] = Color.hsb(c.getHue(), c.getSaturation(), Math.min(1.0, c.getBrightness() + 0.04));
+                    activePixels[x][y] = Color.hsb(c.getHue(), c.getSaturation(), Math.min(1.0, c.getBrightness() + 0.04));
                 }
             }
             case DARKEN -> {
-                Color c = pixels[x][y];
+                Color c = activePixels[x][y];
                 if (c != null) {
-                    pixels[x][y] = Color.hsb(c.getHue(), c.getSaturation(), Math.max(0.0, c.getBrightness() - 0.04));
+                    activePixels[x][y] = Color.hsb(c.getHue(), c.getSaturation(), Math.max(0.0, c.getBrightness() - 0.04));
                 }
             }
             case BURN -> {
-                Color c = pixels[x][y];
+                Color c = activePixels[x][y];
                 if (c != null) {
-                    pixels[x][y] = Color.hsb(c.getHue(), Math.min(1.0, c.getSaturation() * 1.08), Math.max(0.0, c.getBrightness() - 0.04));
+                    activePixels[x][y] = Color.hsb(c.getHue(), Math.min(1.0, c.getSaturation() * 1.08), Math.max(0.0, c.getBrightness() - 0.04));
                 }
             }
             case DODGE -> {
-                Color c = pixels[x][y];
+                Color c = activePixels[x][y];
                 if (c != null) {
-                    pixels[x][y] = Color.hsb(c.getHue(), Math.max(0.0, c.getSaturation() * 0.92), Math.min(1.0, c.getBrightness() + 0.04));
+                    activePixels[x][y] = Color.hsb(c.getHue(), Math.max(0.0, c.getSaturation() * 0.92), Math.min(1.0, c.getBrightness() + 0.04));
                 }
             }
             case FADE -> {
-                Color c = pixels[x][y];
+                Color c = activePixels[x][y];
                 if (c != null) {
-                    pixels[x][y] = Color.hsb(c.getHue(), Math.max(0.0, c.getSaturation() - 0.04), c.getBrightness());
+                    activePixels[x][y] = Color.hsb(c.getHue(), Math.max(0.0, c.getSaturation() - 0.04), c.getBrightness());
                 }
             }
             case BLUR -> {
@@ -704,7 +887,7 @@ public class SpriteEditor extends Stage {
                         int nx = x + dx;
                         int ny = y + dy;
                         if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-                            Color nc = pixels[nx][ny];
+                            Color nc = activePixels[nx][ny];
                             if (nc != null) {
                                 sumR += nc.getRed();
                                 sumG += nc.getGreen();
@@ -715,12 +898,24 @@ public class SpriteEditor extends Stage {
                     }
                 }
                 if (count > 0) {
-                    pixels[x][y] = Color.color(sumR / count, sumG / count, sumB / count);
+                    activePixels[x][y] = Color.color(sumR / count, sumG / count, sumB / count);
                 }
             }
             case REPLACE_COLOR -> {
-                if (isSameColor(pixels[x][y], replaceColorTarget)) {
-                    pixels[x][y] = activeColor;
+                if (isSameColor(activePixels[x][y], replaceColorTarget)) {
+                    activePixels[x][y] = activeColor;
+                }
+            }
+            case HUE_SHIFT -> {
+                Color c = activePixels[x][y];
+                if (c != null && c.getOpacity() > 0.0) {
+                    double angle = hueSlider.getValue();
+                    double originalHue = c.getHue();
+                    double newHue = (originalHue + angle) % 360.0;
+                    if (newHue < 0) {
+                        newHue += 360.0;
+                    }
+                    activePixels[x][y] = Color.hsb(newHue, c.getSaturation(), c.getBrightness(), c.getOpacity());
                 }
             }
             default -> {}
@@ -741,6 +936,66 @@ public class SpriteEditor extends Stage {
         }
     }
 
+    private void addLayer() {
+        saveState();
+        Layer newLayer = new Layer("Layer " + (layers.size() + 1), width, height);
+        layers.add(activeLayerIndex, newLayer);
+        drawCanvas();
+        layersListView.getSelectionModel().select(activeLayerIndex);
+    }
+
+    private void removeLayer() {
+        if (layers.size() <= 1) {
+            return;
+        }
+        saveState();
+        layers.remove(activeLayerIndex);
+        if (activeLayerIndex >= layers.size()) {
+            activeLayerIndex = layers.size() - 1;
+        }
+        drawCanvas();
+        layersListView.getSelectionModel().select(activeLayerIndex);
+    }
+
+    private void moveLayerUp() {
+        if (activeLayerIndex <= 0) return;
+        saveState();
+        Layer temp = layers.get(activeLayerIndex);
+        layers.set(activeLayerIndex, layers.get(activeLayerIndex - 1));
+        layers.set(activeLayerIndex - 1, temp);
+        activeLayerIndex--;
+        drawCanvas();
+        layersListView.getSelectionModel().select(activeLayerIndex);
+    }
+
+    private void moveLayerDown() {
+        if (activeLayerIndex >= layers.size() - 1) return;
+        saveState();
+        Layer temp = layers.get(activeLayerIndex);
+        layers.set(activeLayerIndex, layers.get(activeLayerIndex + 1));
+        layers.set(activeLayerIndex + 1, temp);
+        activeLayerIndex++;
+        drawCanvas();
+        layersListView.getSelectionModel().select(activeLayerIndex);
+    }
+
+    private void duplicateLayer() {
+        saveState();
+        Layer current = layers.get(activeLayerIndex);
+        Layer duplicated = new Layer(current.getName() + " copy", width, height);
+        duplicated.setVisible(current.isVisible());
+
+        Color[][] src = current.getPixels();
+        Color[][] dest = duplicated.getPixels();
+        for (int i = 0; i < width; i++) {
+            System.arraycopy(src[i], 0, dest[i], 0, height);
+        }
+
+        layers.add(activeLayerIndex, duplicated);
+        drawCanvas();
+        layersListView.getSelectionModel().select(activeLayerIndex);
+    }
+
     private void handleMousePressed(MouseEvent event) {
         int px = (int) (event.getX() / zoom);
         int py = (int) (event.getY() / zoom);
@@ -748,6 +1003,8 @@ public class SpriteEditor extends Stage {
         if (px < 0 || px >= width || py < 0 || py >= height) {
             return;
         }
+
+        Color[][] activePixels = layers.get(activeLayerIndex).getPixels();
 
         if (event.getButton() == MouseButton.SECONDARY) {
             if (activeTool == Tool.SELECT && hasSelection &&
@@ -766,8 +1023,8 @@ public class SpriteEditor extends Stage {
                 selectionBuffer = new Color[origSelectWidth][origSelectHeight];
                 for (int x = 0; x < origSelectWidth; x++) {
                     for (int y = 0; y < origSelectHeight; y++) {
-                        selectionBuffer[x][y] = pixels[origSelectMinX + x][origSelectMinY + y];
-                        pixels[origSelectMinX + x][origSelectMinY + y] = null;
+                        selectionBuffer[x][y] = activePixels[origSelectMinX + x][origSelectMinY + y];
+                        activePixels[origSelectMinX + x][origSelectMinY + y] = null;
                     }
                 }
                 updateSelectionMovePreview(0, 0);
@@ -793,12 +1050,12 @@ public class SpriteEditor extends Stage {
                 applyToolAt(px, py);
                 drawCanvas();
             } else if (activeTool == Tool.FILL) {
-                Color targetColor = pixels[px][py];
+                Color targetColor = activePixels[px][py];
                 floodFill(px, py, targetColor, activeColor);
                 isDrawing = false;
                 drawCanvas();
             } else if (activeTool == Tool.DROPPER) {
-                Color picked = pixels[px][py];
+                Color picked = activePixels[px][py];
                 if (picked != null) {
                     setActiveColor(picked);
                 }
@@ -827,6 +1084,8 @@ public class SpriteEditor extends Stage {
 
         coordsLabel.setText("X: " + px + " Y: " + py);
 
+        Color[][] activePixels = layers.get(activeLayerIndex).getPixels();
+
         if (isMovingSelection) {
             int dx = px - dragStartX;
             int dy = py - dragStartY;
@@ -851,7 +1110,7 @@ public class SpriteEditor extends Stage {
             applyToolAt(px, py);
             drawCanvas();
         } else if (activeTool == Tool.DROPPER) {
-            Color picked = pixels[px][py];
+            Color picked = activePixels[px][py];
             if (picked != null) {
                 setActiveColor(picked);
             }
@@ -889,6 +1148,8 @@ public class SpriteEditor extends Stage {
         if (!isDrawing) return;
         isDrawing = false;
 
+        Color[][] activePixels = layers.get(activeLayerIndex).getPixels();
+
         if (isMovingSelection) {
             int px = (int) (event.getX() / zoom);
             int py = (int) (event.getY() / zoom);
@@ -903,7 +1164,7 @@ public class SpriteEditor extends Stage {
                     int targetX = origSelectMinX + x + dx;
                     int targetY = origSelectMinY + y + dy;
                     if (targetX >= 0 && targetX < width && targetY >= 0 && targetY < height) {
-                        pixels[targetX][targetY] = selectionBuffer[x][y];
+                        activePixels[targetX][targetY] = selectionBuffer[x][y];
                     }
                 }
             }
@@ -924,7 +1185,7 @@ public class SpriteEditor extends Stage {
             for (Map.Entry<Point, Color> entry : previewPixels.entrySet()) {
                 Point p = entry.getKey();
                 if (p.x >= 0 && p.x < width && p.y >= 0 && p.y < height) {
-                    pixels[p.x][p.y] = entry.getValue();
+                    activePixels[p.x][p.y] = entry.getValue();
                 }
             }
             previewPixels.clear();
@@ -947,14 +1208,15 @@ public class SpriteEditor extends Stage {
     // Flood Fill algorithm
     private void floodFill(int startX, int startY, Color targetColor, Color replacementColor) {
         if (isSameColor(targetColor, replacementColor)) return;
+        Color[][] activePixels = layers.get(activeLayerIndex).getPixels();
         Queue<Point> queue = new LinkedList<>();
         queue.add(new Point(startX, startY));
         while (!queue.isEmpty()) {
             Point p = queue.poll();
             if (p.x < 0 || p.x >= width || p.y < 0 || p.y >= height) continue;
-            Color c = pixels[p.x][p.y];
+            Color c = activePixels[p.x][p.y];
             if (isSameColor(c, targetColor)) {
-                pixels[p.x][p.y] = replacementColor;
+                activePixels[p.x][p.y] = replacementColor;
                 queue.add(new Point(p.x - 1, p.y));
                 queue.add(new Point(p.x + 1, p.y));
                 queue.add(new Point(p.x, p.y - 1));
@@ -1063,12 +1325,17 @@ public class SpriteEditor extends Stage {
         PixelWriter writer = writableImage.getPixelWriter();
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                Color c = pixels[x][y];
-                if (c == null) {
-                    writer.setColor(x, y, Color.TRANSPARENT);
-                } else {
-                    writer.setColor(x, y, c);
+                Color compositedColor = Color.TRANSPARENT;
+                for (int l = layers.size() - 1; l >= 0; l--) {
+                    Layer layer = layers.get(l);
+                    if (layer.isVisible()) {
+                        Color c = layer.getPixels()[x][y];
+                        if (c != null && c.getOpacity() > 0.0) {
+                            compositedColor = c;
+                        }
+                    }
                 }
+                writer.setColor(x, y, compositedColor);
             }
         }
         SpriteData.Sprite newSprite = translator.translateImageToSprite(writableImage);
@@ -1094,5 +1361,24 @@ public class SpriteEditor extends Stage {
         public int hashCode() {
             return 31 * x + y;
         }
+    }
+
+    public static class Layer {
+        private String name;
+        private Color[][] pixels;
+        private boolean visible;
+
+        public Layer(String name, int width, int height) {
+            this.name = name;
+            this.pixels = new Color[width][height];
+            this.visible = true;
+        }
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public Color[][] getPixels() { return pixels; }
+        public void setPixels(Color[][] pixels) { this.pixels = pixels; }
+        public boolean isVisible() { return visible; }
+        public void setVisible(boolean visible) { this.visible = visible; }
     }
 }
