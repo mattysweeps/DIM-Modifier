@@ -13,4 +13,10 @@ module DIM.Modifier.main {
     opens com.github.cfogrady.dim.modifier to javafx.fxml;
     opens com.github.cfogrady.dim.modifier.controls to javafx.fxml;
     opens com.github.cfogrady.dim.modifier.controllers to javafx.fxml;
+
+    requires com.fasterxml.jackson.databind;
+    requires com.fasterxml.jackson.dataformat.yaml;
+
+    exports com.github.cfogrady.dim.modifier.data.io to com.fasterxml.jackson.databind;
+    opens com.github.cfogrady.dim.modifier.data.io to com.fasterxml.jackson.databind;
 }

@@ -42,6 +42,10 @@ public class LoadedViewController implements Initializable {
     @FXML
     private Button saveAsButton;
     @FXML
+    private Button exportToDirButton;
+    @FXML
+    private Button importFromDirButton;
+    @FXML
     private Text dimIdText;
     @FXML
     private Text revisionIdText;
@@ -102,13 +106,27 @@ public class LoadedViewController implements Initializable {
             refreshButtons();
             refreshSubview();
         });
-        openButton.setOnAction(this::openButton);
-        saveButton.setOnAction(e -> dimIOController.saveDim());
-        saveAsButton.setOnAction(e -> dimIOController.saveAsDim());
+        openButton.setOnAction(event -> {
+            dimIOController.openDim(this::setupProperties);
+        });
+        saveButton.setOnAction(event -> {
+            dimIOController.saveDim();
+        });
+        saveAsButton.setOnAction(event -> {
+            dimIOController.saveAsDim();
+        });
+        exportToDirButton.setOnAction(event -> {
+            new com.github.cfogrady.dim.modifier.data.io.DimDirIOController(appState, (javafx.stage.Stage) exportToDirButton.getScene().getWindow()).exportToDir();
+        });
+        importFromDirButton.setOnAction(event -> {
+            new com.github.cfogrady.dim.modifier.data.io.DimDirIOController(appState, (javafx.stage.Stage) importFromDirButton.getScene().getWindow()).importFromDir();
+            setupProperties();
+        });
     }
 
-    private void openButton(ActionEvent event) {
-        dimIOController.openDim(this::clearState);
+    private void setupProperties() {
+        clearState();
+        refreshAll();
     }
 
     private void clearState() {

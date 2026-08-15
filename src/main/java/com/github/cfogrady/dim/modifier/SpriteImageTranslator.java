@@ -187,7 +187,7 @@ public class SpriteImageTranslator {
         }
     }
 
-    private void exportBabySpriteSheet(File file, Character<?, ?> character) {
+    public void exportBabySpriteSheet(File file, Character<?, ?> character) {
         if(character.getSprites().size() > 7) {
             throw new IllegalArgumentException("Meant only for baby characters");
         }
@@ -225,7 +225,7 @@ public class SpriteImageTranslator {
         drawNormalSpriteImage(blank, background, 196, 115);
     }
 
-    private void exportCharacterSpriteSheet(File file, List<SpriteData.Sprite> sprites) {
+    public void exportCharacterSpriteSheet(File file, List<SpriteData.Sprite> sprites) {
         if(sprites.size() != 13) {
             throw new IllegalArgumentException("Need 13 sprites for export");
         }

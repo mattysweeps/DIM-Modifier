@@ -46,7 +46,16 @@ public class FirstLoadScene {
             }
         });
 
-        VBox root = new VBox(15, button, bypassChecksumCheckBox);
+        Button importDirButton = new Button("Import from Dir");
+        importDirButton.setOnAction(event -> {
+            new com.github.cfogrady.dim.modifier.data.io.DimDirIOController(appState, stage).importFromDir(() -> {
+                if (appState.getCardData() != null) {
+                    setupLoadedDataView();
+                }
+            });
+        });
+
+        VBox root = new VBox(15, button, importDirButton, bypassChecksumCheckBox);
         root.setAlignment(Pos.CENTER);
         Scene scene = new Scene(root, 640, 480);
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
