@@ -15,8 +15,9 @@ public class DimDirIOController {
     public void exportToDir() {
         javafx.stage.DirectoryChooser chooser = new javafx.stage.DirectoryChooser();
         chooser.setTitle("Select Directory to Export DIM");
-        if (appState.getLastOpenedFilePath() != null && appState.getLastOpenedFilePath().getParentFile() != null) {
-            chooser.setInitialDirectory(appState.getLastOpenedFilePath().getParentFile());
+        File lastDir = appState.getLastOpenedDirectory();
+        if (lastDir != null && lastDir.exists()) {
+            chooser.setInitialDirectory(lastDir);
         }
         File selectedDir = chooser.showDialog(stage);
         if (selectedDir != null) {
@@ -85,8 +86,9 @@ public class DimDirIOController {
     public void importFromDir(Runnable onSuccess) {
         javafx.stage.DirectoryChooser chooser = new javafx.stage.DirectoryChooser();
         chooser.setTitle("Select Directory to Import DIM");
-        if (appState.getLastOpenedFilePath() != null && appState.getLastOpenedFilePath().getParentFile() != null) {
-            chooser.setInitialDirectory(appState.getLastOpenedFilePath().getParentFile());
+        File lastDir = appState.getLastOpenedDirectory();
+        if (lastDir != null && lastDir.exists()) {
+            chooser.setInitialDirectory(lastDir);
         }
         File selectedDir = chooser.showDialog(stage);
         if (selectedDir != null) {

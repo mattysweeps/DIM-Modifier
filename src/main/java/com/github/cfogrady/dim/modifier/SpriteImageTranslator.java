@@ -98,8 +98,9 @@ public class SpriteImageTranslator {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Import Sprite Sheet:");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image format", "*.png", "*.bmp"));
-        if(appState.getLastOpenedFilePath() != null) {
-            fileChooser.setInitialDirectory(appState.getLastOpenedFilePath());
+        File lastDir = appState.getLastOpenedDirectory();
+        if (lastDir != null && lastDir.exists()) {
+            fileChooser.setInitialDirectory(lastDir);
         }
         File file = fileChooser.showOpenDialog(stage);
         if(file != null) {
@@ -172,8 +173,8 @@ public class SpriteImageTranslator {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save Sprite Sheet As:");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image format", "*.png"));
-        if(appState.getLastOpenedFilePath() != null) {
-            fileChooser.setInitialDirectory(appState.getLastOpenedFilePath());
+        if(appState.getLastOpenedDirectory() != null) {
+            fileChooser.setInitialDirectory(appState.getLastOpenedDirectory());
         }
         File file = fileChooser.showSaveDialog(stage);
         if(file != null) {

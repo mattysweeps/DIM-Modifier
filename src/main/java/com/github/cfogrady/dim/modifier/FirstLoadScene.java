@@ -38,6 +38,10 @@ public class FirstLoadScene {
         button.setOnAction(event -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Select DIM File");
+            File lastDir = appState.getLastOpenedDirectory();
+            if (lastDir != null && lastDir.exists()) {
+                fileChooser.setInitialDirectory(lastDir);
+            }
             File file = fileChooser.showOpenDialog(stage);
             if(file != null) {
                 if (loadCard(file, !bypassChecksumCheckBox.isSelected())) {

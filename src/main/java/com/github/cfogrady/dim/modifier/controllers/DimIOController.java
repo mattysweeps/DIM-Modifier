@@ -33,8 +33,9 @@ public class DimIOController {
                 new FileChooser.ExtensionFilter("DIM Files (*.dim)", "*.dim"),
                 new FileChooser.ExtensionFilter("All Files (*.*)", "*.*")
         );
-        if (appState.getLastOpenedFilePath() != null && appState.getLastOpenedFilePath().getParentFile() != null) {
-            fileChooser.setInitialDirectory(appState.getLastOpenedFilePath().getParentFile());
+        File lastDir = appState.getLastOpenedDirectory();
+        if (lastDir != null && lastDir.exists()) {
+            fileChooser.setInitialDirectory(lastDir);
         }
         File file = fileChooser.showOpenDialog(stage);
         if(file != null) {
@@ -110,10 +111,11 @@ public class DimIOController {
                 new FileChooser.ExtensionFilter("DIM Files (*.dim)", "*.dim"),
                 new FileChooser.ExtensionFilter("All Files (*.*)", "*.*")
         );
+        File lastDir = appState.getLastOpenedDirectory();
+        if (lastDir != null && lastDir.exists()) {
+            fileChooser.setInitialDirectory(lastDir);
+        }
         if (appState.getLastOpenedFilePath() != null) {
-            if (appState.getLastOpenedFilePath().getParentFile() != null) {
-                fileChooser.setInitialDirectory(appState.getLastOpenedFilePath().getParentFile());
-            }
             fileChooser.setInitialFileName(appState.getLastOpenedFilePath().getName());
         } else {
             fileChooser.setInitialFileName("card.bin");

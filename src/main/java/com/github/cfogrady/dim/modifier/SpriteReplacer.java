@@ -41,8 +41,9 @@ public class SpriteReplacer {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select sprite replacement.");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image format", "*.png", "*.bmp"));
-        if(appState.getLastOpenedFilePath() != null) {
-            fileChooser.setInitialDirectory(appState.getLastOpenedFilePath());
+        File lastDir = appState.getLastOpenedDirectory();
+        if (lastDir != null && lastDir.exists()) {
+            fileChooser.setInitialDirectory(lastDir);
         }
         File file = fileChooser.showOpenDialog(stage);
         if(file != null) {
@@ -56,8 +57,9 @@ public class SpriteReplacer {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select sprite replacement. Should be " + sprite.getWidth() + " x " + sprite.getHeight());
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image format", "*.png", "*.bmp"));
-        if(appState.getLastOpenedFilePath() != null) {
-            fileChooser.setInitialDirectory(appState.getLastOpenedFilePath());
+        File lastDir2 = appState.getLastOpenedDirectory();
+        if (lastDir2 != null && lastDir2.exists()) {
+            fileChooser.setInitialDirectory(lastDir2);
         }
         File file = fileChooser.showOpenDialog(stage);
         if(file != null) {

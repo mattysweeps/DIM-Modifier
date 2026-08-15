@@ -29,9 +29,14 @@ public class FirmwareLoadScene {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("BE Firmware", "*.vb2"));
             fileChooser.setTitle("Select BE Firmware File");
+            File lastDir = appState.getLastOpenedDirectory();
+            if (lastDir != null && lastDir.exists()) {
+                fileChooser.setInitialDirectory(lastDir);
+            }
             File file = fileChooser.showOpenDialog(stage);
             if(FirmwareManager.isValidFirmwareLocation(file)) {
                 try {
+                    appState.setLastOpenedFilePath(file);
                     firmwareManager.setFirmwareLocation(file);
                     appState.setFirmwareData(firmwareManager.loadFirmware());
                     firstLoadScene.setupScene();

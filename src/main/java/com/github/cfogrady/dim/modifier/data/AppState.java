@@ -21,6 +21,39 @@ public class AppState {
     private File lastOpenedFilePath;
     private int selectedBackgroundIndex;
 
+    private static final String LAST_OPENED_FILE_PATH = "LAST_OPENED_FILE_PATH";
+    private static final java.util.prefs.Preferences PREFS = java.util.prefs.Preferences.userNodeForPackage(AppState.class);
+
+    public File getLastOpenedFilePath() {
+        if (lastOpenedFilePath == null) {
+            String path = PREFS.get(LAST_OPENED_FILE_PATH, null);
+            if (path != null) {
+                lastOpenedFilePath = new File(path);
+            }
+        }
+        return lastOpenedFilePath;
+    }
+
+    public void setLastOpenedFilePath(File file) {
+        this.lastOpenedFilePath = file;
+        if (file != null) {
+            PREFS.put(LAST_OPENED_FILE_PATH, file.getAbsolutePath());
+        } else {
+            PREFS.remove(LAST_OPENED_FILE_PATH);
+        }
+    }
+
+    public File getLastOpenedDirectory() {
+        File file = getLastOpenedFilePath();
+        if (file == null) {
+            return null;
+        }
+        if (file.isDirectory()) {
+            return file;
+        }
+        return file.getParentFile();
+    }
+
     public SpriteData.Sprite getSelectedBackground() {
         return cardData.getCardSprites().getBackgrounds().get(selectedBackgroundIndex);
     }
