@@ -45,6 +45,7 @@ public class FirmwareLoadScene {
             }
         });
         Scene scene = new Scene(new StackPane(button), 640, 480);
+        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         stage.setScene(scene);
         stage.show();

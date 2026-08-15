@@ -59,6 +59,7 @@ public class SpecificFusionGridController {
         vBox.setSpacing(10);
         vBox.setPadding(new Insets(10));
         Text text = new Text("Support DIM ID:");
+        text.setStyle("-fx-fill: black; -fx-font-weight: bold;");
         vBox.getChildren().add(text);
         IntegerTextField dimId = new IntegerTextField(fusion.getPartnerDimId(), v -> {
             fusion.setPartnerDimId(v);
@@ -80,6 +81,7 @@ public class SpecificFusionGridController {
     private void refreshSupportCharacterColumn(SpecificFusion fusion, VBox vBox) {
         vBox.getChildren().clear();
         Text text = new Text("Support Character:");
+        text.setStyle("-fx-fill: black; -fx-font-weight: bold;");
         vBox.getChildren().add(text);
         if(fusion.getPartnerDimId() == appState.getCardData().getMetaData().getId()) {
             ImageIntComboBox imageIntComboBox = new ImageIntComboBox();
@@ -105,6 +107,7 @@ public class SpecificFusionGridController {
 
     private Node getEvolveToColumn(SpecificFusion fusion) {
         Label label = new Label("Evolve To:");
+        label.setStyle("-fx-text-fill: black; -fx-font-weight: bold;");
         ImageIntComboBox comboBox = new ImageIntComboBox();
         comboBox.initialize(spriteImageTranslator.createImageValuePairs(appState.getIdleForCharacters()));
         if(fusion.getEvolveToCharacterId() != null) {

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Line?>
+
+<VBox xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.cfogrady.dim.modifier.controllers.EvolutionTreeViewController" VBox.vgrow="ALWAYS">
+   <children>
+      <HBox alignment="CENTER_LEFT" spacing="20.0">
+         <padding>
+            <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+         </padding>
+         <children>
+            <Label text="Evolution Tree" style="-fx-font-weight: bold; -fx-font-size: 16px;" />
+            <Button fx:id="refreshButton" mnemonicParsing="false" text="Refresh Tree" />
+            
+            <!-- Legend Box -->
+            <HBox alignment="CENTER_LEFT" spacing="15.0" style="-fx-border-color: -fx-box-border; -fx-border-radius: 4px; -fx-padding: 4 10 4 10; -fx-background-color: -fx-control-inner-background;">
+               <children>
+                  <Label text="Legend:" style="-fx-font-weight: bold; -fx-font-size: 11px;" />
+                  
+                  <HBox alignment="CENTER" spacing="6.0">
+                     <children>
+                        <Line startX="0" startY="0" endX="22" endY="0" style="-fx-stroke: #0066cc; -fx-stroke-width: 2.5;" />
+                        <Label text="Normal Transformation" style="-fx-font-size: 11px;" />
+                     </children>
+                  </HBox>
+                  
+                  <HBox alignment="CENTER" spacing="6.0">
+                     <children>
+                        <Line startX="0" startY="0" endX="22" endY="0" style="-fx-stroke: #8800cc; -fx-stroke-width: 2.5; -fx-stroke-dash-array: 4 3;" />
+                        <Label text="Attribute Fusion" style="-fx-font-size: 11px;" />
+                     </children>
+                  </HBox>
+
+                  <HBox alignment="CENTER" spacing="6.0">
+                     <children>
+                        <Line startX="0" startY="0" endX="22" endY="0" style="-fx-stroke: #e67300; -fx-stroke-width: 2.5; -fx-stroke-dash-array: 4 3;" />
+                        <Label text="Specific Fusion" style="-fx-font-size: 11px;" />
+                     </children>
+                  </HBox>
+               </children>
+            </HBox>
+         </children>
+      </HBox>
+      <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
+         <content>
+            <AnchorPane fx:id="treeAnchorPane" minWidth="800.0" minHeight="600.0" style="-fx-background-color: -fx-control-inner-background;" />
+         </content>
+      </ScrollPane>
+   </children>
+</VBox>

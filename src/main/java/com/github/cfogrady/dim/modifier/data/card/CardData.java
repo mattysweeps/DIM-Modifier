@@ -37,6 +37,16 @@ public abstract class CardData<T1 extends Character<?, T1>, T2 extends Adventure
         }
     }
 
+    public void swapCharacters(int index1, int index2) {
+        if (index1 < 0 || index1 >= characters.size() || index2 < 0 || index2 >= characters.size()) {
+            return;
+        }
+        T1 temp = characters.get(index1);
+        characters.set(index1, characters.get(index2));
+        characters.set(index2, temp);
+        resetUUIDToIndexesFrom(Math.min(index1, index2));
+    }
+
     public static Integer[] PHASES = {1, 2, 3, 4, 5, 6, 7, 8};
 
     public Integer[] getTotalAvailableStages() {

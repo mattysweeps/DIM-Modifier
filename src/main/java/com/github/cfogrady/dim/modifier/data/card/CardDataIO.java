@@ -19,15 +19,20 @@ import java.io.InputStream;
 @RequiredArgsConstructor
 public class CardDataIO {
     private final DimReader dimReader;
+    private final com.github.cfogrady.vb.dim.card.DimWriter dimWriter;
     private final DimCardDataWriter dimCardDataWriter;
     private final DimCardDataReader dimCardDataReader;
     private final BemCardDataWriter bemCardDataWriter;
     private final BemCardDataReader bemCardDataReader;
 
     public CardData<?, ?, ?> readFromStream(InputStream inputStream) throws IOException {
-        Card card = dimReader.readCard(inputStream, true);
-        if(card.getChecksum() != card.getCalculatedCheckSum()) {
-            throw new IllegalStateException("Checksum mismatch. This is probably the result of a bad read.");
+        return readFromStream(inputStream, true);
+    }
+
+    public CardData<?, ?, ?> readFromStream(InputStream inputStream, boolean verifyChecksum) throws IOException {
+        Card card = dimReader.readCard(inputStream, verifyChecksum);
+        if(verifyChecksum && card.getChecksum() != card.getCalculatedCheckSum()) {
+            throw new IllegalStateException("Checksum mismatch! Calculated: " + Integer.toHexString(card.getCalculatedCheckSum()) + " Received: " + Integer.toHexString(card.getChecksum()));
         }
         if(card instanceof BemCard bemCard) {
             return bemCardDataReader.fromCard(bemCard);
@@ -45,6 +50,23 @@ public class CardDataIO {
             dimCardDataWriter.write(file, dimCardData);
         } else {
             throw new IllegalArgumentException("Unknown CardData type: " + cardData.getClass().getName());
+        }
+    }
+
+    public int calculateSize(CardData<?, ?, ?> cardData) {
+        if (cardData == null) return 0;
+        try {
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+            if (cardData instanceof BemCardData bemCardData) {
+                BemCard bemCard = bemCardDataWriter.mergeBack(bemCardData);
+                dimWriter.writeCard(bemCard, baos);
+            } else if (cardData instanceof DimCardData dimCardData) {
+                DimCard dimCard = dimCardDataWriter.mergeBack(dimCardData);
+                dimWriter.writeCard(dimCard, baos);
+            }
+            return baos.size();
+        } catch (Exception e) {
+            return 0;
         }
     }
 }

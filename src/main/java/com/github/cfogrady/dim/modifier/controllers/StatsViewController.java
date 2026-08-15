@@ -38,6 +38,8 @@ public class StatsViewController implements Initializable {
     @FXML
     private ImageView imageView;
     @FXML
+    private Label dimensionsLabel;
+    @FXML
     private Button prevSpriteButton;
     @FXML
     private Button nextSpriteButton;
@@ -132,6 +134,26 @@ public class StatsViewController implements Initializable {
         imageView.setImage(image);
         imageView.setFitWidth(sprite.getWidth() * 2.0);
         imageView.setFitHeight(sprite.getHeight() * 2.0);
+        updateDimensionsLabel(sprite);
+    }
+
+    private void updateDimensionsLabel(SpriteData.Sprite sprite) {
+        if (dimensionsLabel == null) return;
+        List<SpriteData.SpriteDimensions> validDimensions;
+        int backgroundSpriteIdx = character.getSprites().size() - 1;
+        if (spriteOption == backgroundSpriteIdx) {
+            validDimensions = List.of(CUTIN_DIMENSIONS);
+        } else {
+            validDimensions = character.getValidDimensions();
+        }
+
+        StringBuilder validDimStr = new StringBuilder();
+        for (int i = 0; i < validDimensions.size(); i++) {
+            if (i > 0) validDimStr.append(", ");
+            validDimStr.append(validDimensions.get(i).getWidth()).append("x").append(validDimensions.get(i).getHeight());
+        }
+
+        dimensionsLabel.setText(String.format("Size: %dx%d (Expected: %s)", sprite.getWidth(), sprite.getHeight(), validDimStr.toString()));
     }
 
     private void replaceCharacterSprite(SpriteData.Sprite newSprite) {

@@ -66,14 +66,6 @@ public class BemSystemViewController implements Initializable {
     @FXML
     StackPane iconSpriteContainer;
     @FXML
-    ImageView eggSpritesView;
-    @FXML
-    StackPane eggSpriteContainer;
-    @FXML
-    Button prevEggButton;
-    @FXML
-    Button nextEggButton;
-    @FXML
     ImageView hitSpritesView;
     @FXML
     StackPane hitSpriteContainer;
@@ -105,7 +97,6 @@ public class BemSystemViewController implements Initializable {
         initializeStagesSprites();
         initializeAttributeSprites();
         initializeLogoSprites();
-        initializeEggSprites();
         initializeHitSprites();
         initializeSmallAttackSprites();
         initializeBigAttackSprites();
@@ -115,7 +106,6 @@ public class BemSystemViewController implements Initializable {
         textSpriteIndex = 0;
         stageSelection = 0;
         attributeSelection = 0;
-        eggSelection = 0;
         hitSelection = 0;
         bigAttackSelection = 0;
         smallAttackSelection = 0;
@@ -127,7 +117,6 @@ public class BemSystemViewController implements Initializable {
         refreshStageSprite();
         refreshAttributeSprite();
         refreshLogoSprite();
-        refreshEggSprite();
         refreshHitSprite();
         refreshSmallAttackSprite();
         refreshBigAttackSprite();
@@ -413,62 +402,6 @@ public class BemSystemViewController implements Initializable {
 
     private void refreshLogoSprite() {
         iconSpriteView.setImage(spriteImageTranslator.loadImageFromSprite(appState.getCardData().getCardSprites().getLogo()));
-    }
-
-    private int eggSelection = 0;
-
-    private void initializeEggSprites() {
-        nextEggButton.setOnAction(e -> {
-            eggSelection = (eggSelection + 1) % appState.getCardData().getCardSprites().getEgg().size();
-            refreshEggSprite();
-        });
-        prevEggButton.setOnAction(e -> {
-            eggSelection = eggSelection -1;
-            if(eggSelection < 0) {
-                eggSelection = appState.getCardData().getCardSprites().getEgg().size() - 1;
-            }
-            refreshEggSprite();
-        });
-        eggSpriteContainer.setOnMouseClicked(e -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            if(newSprite != null) {
-                replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(32).height(40).build(), this::setEggSprite, this::refreshEggSprite);
-            }
-        });
-        eggSpriteContainer.setOnDragDropped( e-> {
-            if(e.getDragboard().hasFiles()) {
-                List<File> files = e.getDragboard().getFiles();
-                File file = files.get(0);
-                SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFile(file);
-                replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(32).height(40).build(), this::setEggSprite, this::refreshEggSprite);
-            }
-        });
-        eggSpriteContainer.setOnDragOver(e -> {
-            if (e.getDragboard().hasImage()) {
-                e.acceptTransferModes(TransferMode.ANY);
-                log.info("Drag Over Image");
-                e.consume();
-            } else if(e.getDragboard().hasFiles()) {
-                if (e.getDragboard().getFiles().size() > 1) {
-                    log.info("Can only load 1 file at a time");
-                } else {
-                    e.acceptTransferModes(TransferMode.ANY);
-                    e.consume();
-                }
-            }
-        });
-    }
-
-    private SpriteData.Sprite getEggSprite() {
-        return appState.getCardData().getCardSprites().getEgg().get(eggSelection);
-    }
-
-    private void setEggSprite(SpriteData.Sprite newSprite) {
-        appState.getCardData().getCardSprites().getEgg().set(eggSelection, newSprite);
-    }
-
-    private void refreshEggSprite() {
-        eggSpritesView.setImage(spriteImageTranslator.loadImageFromSprite(getEggSprite()));
     }
 
     private int hitSelection = 0;

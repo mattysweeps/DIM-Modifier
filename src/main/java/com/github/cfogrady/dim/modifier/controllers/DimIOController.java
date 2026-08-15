@@ -3,8 +3,8 @@ package com.github.cfogrady.dim.modifier.controllers;
 import com.github.cfogrady.dim.modifier.data.AppState;
 import com.github.cfogrady.dim.modifier.data.card.CardData;
 import com.github.cfogrady.dim.modifier.data.card.CardDataIO;
-import com.github.cfogrady.dim.modifier.data.card.CardSprites;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -29,16 +30,44 @@ public class DimIOController {
         fileChooser.setTitle("Select DIM File");
         File file = fileChooser.showOpenDialog(stage);
         if(file != null) {
-            try(InputStream fileInputStream = new FileInputStream(file)) {
-                CardData<?, ?, ?> cardData = cardDataIO.readFromStream(fileInputStream);
-                appState.setCardData(cardData);
+            if (loadDimWithChecksumHandling(file)) {
                 onCompletion.run();
-            } catch (FileNotFoundException e) {
-                log.error("Couldn't find selected file.", e);
-            } catch (IOException e) {
-                log.error("Couldn't close file???", e);
             }
+        }
+    }
 
+    private boolean loadDimWithChecksumHandling(File file) {
+        try(InputStream fileInputStream = new FileInputStream(file)) {
+            CardData<?, ?, ?> cardData = cardDataIO.readFromStream(fileInputStream, true);
+            appState.setCardData(cardData);
+            return true;
+        } catch (IllegalStateException e) {
+            log.warn("Checksum mismatch or invalid DIM: {}", e.getMessage());
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Checksum Error");
+            alert.setHeaderText("DIM Checksum Mismatch");
+            alert.setContentText(e.getMessage() + "\n\nDo you want to bypass checksum validation and load this file anyway?");
+            ButtonType loadAnyway = new ButtonType("Bypass & Load Anyway");
+            ButtonType cancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+            alert.getButtonTypes().setAll(loadAnyway, cancel);
+            Optional<ButtonType> result = alert.showAndWait();
+            if(result.isPresent() && result.get() == loadAnyway) {
+                try(InputStream retryStream = new FileInputStream(file)) {
+                    CardData<?, ?, ?> cardData = cardDataIO.readFromStream(retryStream, false);
+                    appState.setCardData(cardData);
+                    return true;
+                } catch (Exception retryEx) {
+                    log.error("Failed to load file even with checksum bypassed: {}", file.getAbsolutePath(), retryEx);
+                    return false;
+                }
+            }
+            return false;
+        } catch (FileNotFoundException e) {
+            log.error("Couldn't find selected file.", e);
+            return false;
+        } catch (IOException e) {
+            log.error("Error opening/closing file.", e);
+            return false;
         }
     }
 
@@ -60,5 +89,10 @@ public class DimIOController {
 
     private void saveDimToFile(File file) {
         cardDataIO.writeToFile(appState.getCardData(), file);
+    }
+
+    public int calculateCardSize() {
+        if (appState.getCardData() == null) return 0;
+        return cardDataIO.calculateSize(appState.getCardData());
     }
 }

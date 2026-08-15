@@ -25,6 +25,10 @@ public class LoadedViewController implements Initializable {
     private final CharacterViewController characterViewController;
     private final BattlesViewController battlesViewController;
     private final Node battlesSubView;
+    private final EvolutionTreeViewController evolutionTreeViewController;
+    private final Node evolutionTreeSubView;
+    private final EggViewController eggViewController;
+    private final Node eggSubView;
     private final BemSystemViewController bemSystemViewController;
     private final Node bemSystemSubView;
     private final DimSystemViewController dimSystemViewController;
@@ -44,9 +48,15 @@ public class LoadedViewController implements Initializable {
     @FXML
     private Text checksumText;
     @FXML
+    private Text bytesUsedText;
+    @FXML
     private Button charactersButton;
     @FXML
+    private Button evolutionTreeButton;
+    @FXML
     private Button battlesButton;
+    @FXML
+    private Button eggButton;
     @FXML
     private Button systemButton;
     @FXML
@@ -56,7 +66,9 @@ public class LoadedViewController implements Initializable {
 
     private enum SubViewSelection {
         CHARACTERS,
+        EVOLUTION_TREE,
         BATTLES,
+        EGG,
         SYSTEM;
     }
 
@@ -68,8 +80,18 @@ public class LoadedViewController implements Initializable {
             refreshButtons();
             refreshSubview();
         });
+        evolutionTreeButton.setOnAction(e -> {
+            subViewSelection = SubViewSelection.EVOLUTION_TREE;
+            refreshButtons();
+            refreshSubview();
+        });
         battlesButton.setOnAction(e -> {
             subViewSelection = SubViewSelection.BATTLES;
+            refreshButtons();
+            refreshSubview();
+        });
+        eggButton.setOnAction(e -> {
+            subViewSelection = SubViewSelection.EGG;
             refreshButtons();
             refreshSubview();
         });
@@ -89,6 +111,8 @@ public class LoadedViewController implements Initializable {
     private void clearState() {
         appState.setSelectedBackgroundIndex(0);
         characterViewController.clearState();
+        evolutionTreeViewController.clearState();
+        eggViewController.clearState();
         bemSystemViewController.clearState();
         dimSystemViewController.clearState();
         refreshAll();
@@ -100,13 +124,29 @@ public class LoadedViewController implements Initializable {
         revisionIdText.setText("Revision: " + metaData.getRevision());
         factoryDateText.setText("Factory Date: " + metaData.getYear() + "/" + metaData.getMonth() + "/" + metaData.getDay());
         checksumText.setText("Checksum At Load: " + Integer.toHexString(metaData.getOriginalChecksum()));
+        updateBytesUsedText();
         refreshButtons();
         refreshSubview();
     }
 
+    public void updateBytesUsedText() {
+        if (bytesUsedText == null || appState.getCardData() == null) return;
+        try {
+            int bytesUsed = dimIOController.calculateCardSize();
+            double pages = bytesUsed / 4096.0;
+            int pageCount = (int) Math.ceil(pages);
+            bytesUsedText.setText(String.format("Bytes Used: %,d (%d / 4096 B blocks | %.2f)", bytesUsed, pageCount, pages));
+        } catch (Exception e) {
+            log.error("Failed to calculate bytes used", e);
+            bytesUsedText.setText("Bytes Used: N/A");
+        }
+    }
+
     public void refreshButtons() {
         charactersButton.setDisable(subViewSelection == SubViewSelection.CHARACTERS);
+        evolutionTreeButton.setDisable(subViewSelection == SubViewSelection.EVOLUTION_TREE);
         battlesButton.setDisable(subViewSelection == SubViewSelection.BATTLES);
+        eggButton.setDisable(subViewSelection == SubViewSelection.EGG);
         systemButton.setDisable(subViewSelection == SubViewSelection.SYSTEM);
     }
 
@@ -122,9 +162,17 @@ public class LoadedViewController implements Initializable {
                 characterViewController.refreshAll();
                 return charactersSubView;
             }
+            case EVOLUTION_TREE -> {
+                evolutionTreeViewController.refreshAll();
+                return evolutionTreeSubView;
+            }
             case BATTLES -> {
                 battlesViewController.refreshAll();
                 return battlesSubView;
+            }
+            case EGG -> {
+                eggViewController.refreshAll();
+                return eggSubView;
             }
             case SYSTEM -> {
                 if(appState.getCardData() instanceof BemCardData) {

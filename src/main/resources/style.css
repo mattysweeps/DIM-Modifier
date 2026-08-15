@@ -1,0 +1,27 @@
+.root {
+    -fx-text-background-color: black;
+}
+
+.label {
+    -fx-text-fill: black !important;
+}
+
+.text {
+    -fx-fill: black !important;
+}
+
+.titled-pane > .title {
+    -fx-text-fill: black !important;
+}
+
+.titled-pane > .title > .text {
+    -fx-fill: black !important;
+}
+
+.check-box {
+    -fx-text-fill: black !important;
+}
+
+.button {
+    -fx-text-fill: black !important;
+}

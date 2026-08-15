@@ -83,12 +83,16 @@ public class ImageIntComboBox extends ComboBox<ImageIntPair> {
                 ImageView imageView = new ImageView(option.getLabel());
                 imageView.setFitWidth(option.getLabel().getWidth() * scaler);
                 imageView.setFitHeight(option.getLabel().getHeight() * scaler);
+                int w = (int) option.getLabel().getWidth();
+                int h = (int) option.getLabel().getHeight();
+                javafx.scene.control.Tooltip.install(imageView, new javafx.scene.control.Tooltip(w + "x" + h));
                 if(background != null) {
                     StackPane stackPane = new StackPane(imageView);
                     stackPane.setMaxHeight(option.getLabel().getHeight() * scaler);
                     stackPane.setMaxWidth(option.getLabel().getWidth() * scaler);
                     stackPane.setBackground(background);
                     VBox.setMargin(stackPane, new Insets(10));
+                    javafx.scene.control.Tooltip.install(stackPane, new javafx.scene.control.Tooltip(w + "x" + h));
                     setGraphic(stackPane);
                 } else {
                     VBox.setMargin(imageView, new Insets(10));

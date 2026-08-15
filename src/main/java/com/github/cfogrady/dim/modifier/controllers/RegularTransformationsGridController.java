@@ -59,8 +59,14 @@ public class RegularTransformationsGridController {
         gridPane.add(getDeleteButton(transformationEntry, character), columnIndex++, rowIndex);
     }
 
+    private Label createLabel(String text) {
+        Label label = new Label(text);
+        label.setStyle("-fx-text-fill: black; -fx-font-weight: bold;");
+        return label;
+    }
+
     private Node getEvolveToColumn(TransformationEntry transformationEntry) {
-        Label label = new Label("Evolve To:");
+        Label label = createLabel("Evolve To:");
         ImageIntComboBox comboBox = new ImageIntComboBox();
         comboBox.initialize(spriteImageTranslator.createImageValuePairs(appState.getIdleForCharacters()));
         if(transformationEntry.getToCharacter() != null) {
@@ -90,7 +96,7 @@ public class RegularTransformationsGridController {
             labelText = "Minutes Until Transformation:";
             textField = new IntegerTextField(bemTransformationEntry.getMinutesUntilTransformation(), bemTransformationEntry::setMinutesUntilTransformation);
         }
-        Label label = new Label(labelText);
+        Label label = createLabel(labelText);
         textField.setMin(1);
         textField.setMax(0xFFFF);
         VBox vBox = new VBox(label, textField);
@@ -100,7 +106,7 @@ public class RegularTransformationsGridController {
     }
 
     private Node getVitalValueRequirementLabel(TransformationEntry transformationEntry) {
-        Label label = new Label("Vital Value Requirement:");
+        Label label = createLabel("Vital Value Requirement:");
         IntegerTextField textField = new IntegerTextField(transformationEntry.getVitalRequirements(), transformationEntry::setVitalRequirements);
         textField.setMax(10000);
         VBox vBox = new VBox(label, textField);
@@ -110,7 +116,7 @@ public class RegularTransformationsGridController {
     }
 
     private Node getTrophiesRequirementLabel(TransformationEntry transformationEntry) {
-        Label label = new Label("PP Requirement:");
+        Label label = createLabel("PP Requirement:");
         IntegerTextField textField = new IntegerTextField(transformationEntry.getTrophyRequirement(), transformationEntry::setTrophyRequirement);
         textField.setMax(10000);
         VBox vBox = new VBox(label, textField);
@@ -120,7 +126,7 @@ public class RegularTransformationsGridController {
     }
 
     private Node getBattlesRequirementLabel(TransformationEntry transformationEntry) {
-        Label label = new Label("Battles Requirement:");
+        Label label = createLabel("Battles Requirement:");
         IntegerTextField textField = new IntegerTextField(transformationEntry.getBattleRequirement(), transformationEntry::setBattleRequirement);
         textField.setMax(10000);
         VBox vBox = new VBox(label, textField);
@@ -130,7 +136,7 @@ public class RegularTransformationsGridController {
     }
 
     private Node getWinRatioRequirementLabel(TransformationEntry transformationEntry) {
-        Label label = new Label("Win Ratio Requirement:");
+        Label label = createLabel("Win Ratio Requirement:");
         IntegerTextField textField = new IntegerTextField(transformationEntry.getWinRatioRequirement(), transformationEntry::setWinRatioRequirement);
         textField.setMin(0);
         textField.setMax(100);
@@ -141,7 +147,7 @@ public class RegularTransformationsGridController {
     }
 
     private Node getAreaCompletionLabel(BemTransformationEntry transformationEntry) {
-        Label label = new Label("Adventure Completion:");
+        Label label = createLabel("Adventure Completion:");
         IntegerComboBox integerComboBox = new IntegerComboBox(transformationEntry.getRequiredCompletedAdventureLevel(), 12, 1, true, transformationEntry::setRequiredCompletedAdventureLevel);
         VBox vBox = new VBox(label, integerComboBox);
         vBox.setSpacing(10);

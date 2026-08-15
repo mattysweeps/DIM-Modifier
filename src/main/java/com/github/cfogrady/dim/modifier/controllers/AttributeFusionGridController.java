@@ -63,6 +63,7 @@ public class AttributeFusionGridController {
             hBox.getChildren().add(stackPane);
         } else {
             Text text = new Text(defaultText);
+            text.setStyle("-fx-fill: black; -fx-font-weight: bold;");
             hBox.getChildren().add(text);
         }
         ImageIntComboBox imageIntComboBox = new ImageIntComboBox();

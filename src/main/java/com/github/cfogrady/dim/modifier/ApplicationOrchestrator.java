@@ -46,7 +46,7 @@ public class ApplicationOrchestrator {
         DimCardDataWriter dimCardDataWriter = new DimCardDataWriter(dimWriter);
         BemCardDataReader bemCardDataReader = new BemCardDataReader();
         BemCardDataWriter bemCardDataWriter = new BemCardDataWriter(dimWriter);
-        CardDataIO cardDataIO = new CardDataIO(dimReader, dimCardDataWriter, dimCardDataReader, bemCardDataWriter, bemCardDataReader);
+        CardDataIO cardDataIO = new CardDataIO(dimReader, dimWriter, dimCardDataWriter, dimCardDataReader, bemCardDataWriter, bemCardDataReader);
         AppState appState = new AppState();
         SpriteImageTranslator spriteImageTranslator = new SpriteImageTranslator(appState, stage);
 
@@ -76,6 +76,14 @@ public class ApplicationOrchestrator {
         loader = new FXMLLoader(ApplicationOrchestrator.class.getResource("/BattlesView.fxml"));
         loader.setControllerFactory(p -> battlesViewController);
         Node battlesView = loader.load();
+        EvolutionTreeViewController evolutionTreeViewController = new EvolutionTreeViewController(appState, spriteImageTranslator);
+        loader = new FXMLLoader(ApplicationOrchestrator.class.getResource("/EvolutionTreeView.fxml"));
+        loader.setControllerFactory(p -> evolutionTreeViewController);
+        Node evolutionTreeView = loader.load();
+        EggViewController eggViewController = new EggViewController(appState, spriteImageTranslator, spriteReplacer);
+        loader = new FXMLLoader(ApplicationOrchestrator.class.getResource("/EggView.fxml"));
+        loader.setControllerFactory(p -> eggViewController);
+        Node eggView = loader.load();
         BemSystemViewController bemSystemViewController = new BemSystemViewController(appState, spriteImageTranslator, spriteReplacer);
         loader = new FXMLLoader(ApplicationOrchestrator.class.getResource("/BemSystemView.fxml"));
         loader.setControllerFactory(p -> bemSystemViewController);
@@ -84,7 +92,7 @@ public class ApplicationOrchestrator {
         loader = new FXMLLoader(ApplicationOrchestrator.class.getResource("/DimSystemView.fxml"));
         loader.setControllerFactory(p -> dimSystemViewController);
         Node dimSystemView = loader.load();
-        LoadedViewController loadedViewController = new LoadedViewController(appState, charactersView, characterViewController, battlesViewController, battlesView, bemSystemViewController, bemSystemView, dimSystemViewController, dimSystemView, dimReaderController);
+        LoadedViewController loadedViewController = new LoadedViewController(appState, charactersView, characterViewController, battlesViewController, battlesView, evolutionTreeViewController, evolutionTreeView, eggViewController, eggView, bemSystemViewController, bemSystemView, dimSystemViewController, dimSystemView, dimReaderController);
         FirstLoadScene firstLoadScene = new FirstLoadScene(appState, stage, cardDataIO, loadedViewController);
         FirmwareLoadScene firmwareLoadScene = new FirmwareLoadScene(stage, firmwareManager, firstLoadScene, appState);
         return ApplicationOrchestrator.builder()

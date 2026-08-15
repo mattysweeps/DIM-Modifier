@@ -37,30 +37,19 @@ public class DimSystemViewController implements Initializable {
     ImageView iconSpriteView;
     @FXML
     StackPane iconSpriteContainer;
-    @FXML
-    ImageView eggSpritesView;
-    @FXML
-    StackPane eggSpriteContainer;
-    @FXML
-    Button prevEggButton;
-    @FXML
-    Button nextEggButton;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         initializeBackground();
         initializeLogoSprites();
-        initializeEggSprites();
     }
 
     public void clearState() {
-        eggSelection = 0;
     }
 
     public void refreshAll() {
         refreshBackground();
         refreshLogoSprite();
-        refreshEggSprite();
     }
 
     private void initializeBackground() {
@@ -143,61 +132,5 @@ public class DimSystemViewController implements Initializable {
 
     private void refreshLogoSprite() {
         iconSpriteView.setImage(spriteImageTranslator.loadImageFromSprite(appState.getCardData().getCardSprites().getLogo()));
-    }
-
-    private int eggSelection = 0;
-
-    private void initializeEggSprites() {
-        nextEggButton.setOnAction(e -> {
-            eggSelection = (eggSelection + 1) % appState.getCardData().getCardSprites().getEgg().size();
-            refreshEggSprite();
-        });
-        prevEggButton.setOnAction(e -> {
-            eggSelection = eggSelection -1;
-            if(eggSelection < 0) {
-                eggSelection = appState.getCardData().getCardSprites().getEgg().size() - 1;
-            }
-            refreshEggSprite();
-        });
-        eggSpriteContainer.setOnMouseClicked(e -> {
-            SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFileChooser();
-            if(newSprite != null) {
-                replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(32).height(40).build(), this::setEggSprite, this::refreshEggSprite);
-            }
-        });
-        eggSpriteContainer.setOnDragDropped( e-> {
-            if(e.getDragboard().hasFiles()) {
-                List<File> files = e.getDragboard().getFiles();
-                File file = files.get(0);
-                SpriteData.Sprite newSprite = spriteReplacer.loadSpriteFromFile(file);
-                replaceSprite(newSprite, SpriteData.SpriteDimensions.builder().width(32).height(40).build(), this::setEggSprite, this::refreshEggSprite);
-            }
-        });
-        eggSpriteContainer.setOnDragOver(e -> {
-            if (e.getDragboard().hasImage()) {
-                e.acceptTransferModes(TransferMode.ANY);
-                log.info("Drag Over Image");
-                e.consume();
-            } else if(e.getDragboard().hasFiles()) {
-                if (e.getDragboard().getFiles().size() > 1) {
-                    log.info("Can only load 1 file at a time");
-                } else {
-                    e.acceptTransferModes(TransferMode.ANY);
-                    e.consume();
-                }
-            }
-        });
-    }
-
-    private SpriteData.Sprite getEggSprite() {
-        return appState.getCardData().getCardSprites().getEgg().get(eggSelection);
-    }
-
-    private void setEggSprite(SpriteData.Sprite newSprite) {
-        appState.getCardData().getCardSprites().getEgg().set(eggSelection, newSprite);
-    }
-
-    private void refreshEggSprite() {
-        eggSpritesView.setImage(spriteImageTranslator.loadImageFromSprite(getEggSprite()));
     }
 }

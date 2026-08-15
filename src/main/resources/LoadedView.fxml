@@ -22,12 +22,15 @@
             <Text fx:id="revisionIdText" strokeType="OUTSIDE" strokeWidth="0.0" text="Revision: 0" />
             <Text fx:id="factoryDateText" strokeType="OUTSIDE" strokeWidth="0.0" text="Factory Date" />
             <Text fx:id="checksumText" strokeType="OUTSIDE" strokeWidth="0.0" text="Checksum" />
+            <Text fx:id="bytesUsedText" strokeType="OUTSIDE" strokeWidth="0.0" text="Bytes Used: 0 / 4096" />
          </children>
       </HBox>
       <HBox alignment="CENTER_LEFT" spacing="10.0">
          <children>
             <Button fx:id="charactersButton" mnemonicParsing="false" text="Characters" />
+            <Button fx:id="evolutionTreeButton" mnemonicParsing="false" text="Evolution Tree" />
             <Button fx:id="battlesButton" mnemonicParsing="false" text="Battles" />
+            <Button fx:id="eggButton" mnemonicParsing="false" text="Egg" />
             <Button fx:id="systemButton" mnemonicParsing="false" text="System" />
          </children>
          <padding>

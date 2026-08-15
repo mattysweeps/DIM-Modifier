@@ -2,7 +2,8 @@
 plugins {
     id "io.toolebox.git-versioner" version "1.6.5"
     id 'org.openjfx.javafxplugin' version '0.0.10'
-    id 'org.beryx.jlink' version '2.24.1'
+    id 'org.beryx.jlink' version '2.26.0'
+    id 'org.javamodularity.moduleplugin' version '1.8.15'
     id 'application'
 }
 
@@ -11,6 +12,7 @@ group 'com.github.cfogrady'
 repositories {
     mavenLocal()
     mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 javafx {
@@ -20,12 +22,12 @@ javafx {
 
 dependencies {
     //lombok
-    compileOnly 'org.projectlombok:lombok:1.18.22'
-    annotationProcessor 'org.projectlombok:lombok:1.18.22'
-    testCompileOnly 'org.projectlombok:lombok:1.18.22'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+    testCompileOnly 'org.projectlombok:lombok:1.18.34'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
 
-    implementation 'com.github.cfogrady:vb-dim-reader:2.0.2'
+    implementation 'com.github.cfogrady:vb-dim-reader:2.1.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 

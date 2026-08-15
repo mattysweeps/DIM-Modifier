@@ -39,6 +39,12 @@ public class StatsGridController {
     private Runnable resetView;
 
 
+    private Label createLabel(String text) {
+        Label label = new Label(text);
+        label.setStyle("-fx-text-fill: black; -fx-font-weight: bold;");
+        return label;
+    }
+
     public void refreshStatsGrid(Character<?, ?> character) {
         stackPane.getChildren().clear();
         GridPane gridPane = new GridPane();
@@ -61,7 +67,7 @@ public class StatsGridController {
     }
 
     private Node setupStageLabel(Character<?, ?> character) {
-        Label label = new Label("Stage: ");
+        Label label = createLabel("Stage: ");
         ComboBox<Integer> comboBox = new ComboBox<>();
         comboBox.setValue(character.getStage() + 1);
         comboBox.setItems(FXCollections.observableArrayList(appState.getCardData().getTotalAvailableStages()));
@@ -110,7 +116,7 @@ public class StatsGridController {
     }
 
     private Node setupLockedLabel(DimCharacter character) {
-        Label label = new Label("Requires Unlock:");
+        Label label = createLabel("Requires Unlock:");
         ComboBox<Boolean> comboBox = new ComboBox<>();
         comboBox.setItems(FXCollections.observableArrayList(false, true));
         comboBox.setValue(character.isFinishAdventureToUnlock());
@@ -131,11 +137,11 @@ public class StatsGridController {
 
     private Node setupAttributeLabel(Character<?, ?> character) {
         if(character.getStage() < 2 && character instanceof DimCharacter) {
-            Label label = new Label("Attribute: " + character.getAttribute());
+            Label label = createLabel("Attribute: " + character.getAttribute());
             GridPane.setMargin(label, new Insets(10));
             return label;
         }
-        Label label = new Label("Attribute:");
+        Label label = createLabel("Attribute:");
         HBox hBox = new HBox(label);
         hBox.setSpacing(10);
         hBox.setAlignment(Pos.CENTER_LEFT);
@@ -172,7 +178,7 @@ public class StatsGridController {
     }
 
     private Node setupDispositionLabel(Character<?, ?> character) {
-        Label label = new Label("Activity Type:");
+        Label label = createLabel("Activity Type:");
         StringIntComboBox comboBox = new StringIntComboBox(character.getActivityType(), getActivityTypes(), character::setActivityType);
         HBox hBox = new HBox(label, comboBox);
         hBox.setSpacing(10);
@@ -192,11 +198,11 @@ public class StatsGridController {
 
     private Node setupSmallAttackLabel(Character<?, ?> character) {
         if(character.getStage() < 2) {
-            Label label = new Label("Small Attack: " + NONE_LABEL);
+            Label label = createLabel("Small Attack: " + NONE_LABEL);
             GridPane.setMargin(label, new Insets(10));
             return label;
         }
-        Label label = new Label("Small Attack:");
+        Label label = createLabel("Small Attack:");
         List<SpriteData.Sprite> attackSprites = appState.getFirmwareData().getSmallAttacks();
         attackSprites.addAll(appState.getCardData().getCardSprites().getSmallAttacks());
         ImageIntComboBox comboBox = new ImageIntComboBox();
@@ -212,11 +218,11 @@ public class StatsGridController {
 
     private Node setupBigAttackLabel(Character<?, ?> character) {
         if(character.getStage() < 2) {
-            Label label = new Label("Big Attack: " + NONE_LABEL);
+            Label label = createLabel("Big Attack: " + NONE_LABEL);
             GridPane.setMargin(label, new Insets(10));
             return label;
         }
-        Label label = new Label("Big Attack:");
+        Label label = createLabel("Big Attack:");
         List<SpriteData.Sprite> attackSprites = appState.getFirmwareData().getBigAttacks();
         attackSprites.addAll(appState.getCardData().getCardSprites().getBigAttacks());
         ImageIntComboBox comboBox = new ImageIntComboBox();
@@ -232,11 +238,11 @@ public class StatsGridController {
 
     private Node setupDPStarsLabel(DimCharacter character) {
         if(character.getStage() < 2) {
-            Label label = new Label("DP (stars): " + NONE_LABEL);
+            Label label = createLabel("DP (stars): " + NONE_LABEL);
             GridPane.setMargin(label, new Insets(10));
             return label;
         }
-        Label label = new Label("DP (stars):");
+        Label label = createLabel("DP (stars):");
         IntegerTextField integerTextField = new IntegerTextField();
         integerTextField.initialize();
         integerTextField.setText(Integer.toString(character.getStars()));
@@ -261,11 +267,11 @@ public class StatsGridController {
             maxBpStat = 75;
         }
         if(character.getStage() < 2) {
-            Label label = new Label(labelText + " " + NONE_LABEL);
+            Label label = createLabel(labelText + " " + NONE_LABEL);
             GridPane.setMargin(label, new Insets(10));
             return label;
         }
-        Label label = new Label(labelText);
+        Label label = createLabel(labelText);
         IntegerTextField integerTextField = new IntegerTextField(character.getBp(), character::setBp);
         integerTextField.setPrefWidth(60);
         integerTextField.setMax(maxBpStat);
@@ -279,11 +285,11 @@ public class StatsGridController {
     private Node setupHpLabel(Character<?, ?> character) {
         int maxHpStat = character instanceof BemCharacter ? 10000 : 22;
         if(character.getStage() < 2) {
-            Label label = new Label("HP: " + NONE_LABEL);
+            Label label = createLabel("HP: " + NONE_LABEL);
             GridPane.setMargin(label, new Insets(10));
             return label;
         }
-        Label label = new Label("HP:");
+        Label label = createLabel("HP:");
         IntegerTextField integerTextField = new IntegerTextField(character.getHp(), character::setHp);
         integerTextField.setPrefWidth(60);
         integerTextField.setMax(maxHpStat);
@@ -297,11 +303,11 @@ public class StatsGridController {
     private Node setupApLabel(Character<?, ?> character) {
         int maxApStat = character instanceof BemCharacter ? 10000 : 12;
         if(character.getStage() < 2) {
-            Label label = new Label("AP: " + NONE_LABEL);
+            Label label = createLabel("AP: " + NONE_LABEL);
             GridPane.setMargin(label, new Insets(10));
             return label;
         }
-        Label label = new Label("AP:");
+        Label label = createLabel("AP:");
         IntegerTextField integerTextField = new IntegerTextField(character.getAp(), character::setAp);
         integerTextField.setMax(maxApStat);
         integerTextField.setPrefWidth(60);

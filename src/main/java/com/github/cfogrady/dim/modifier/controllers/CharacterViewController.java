@@ -47,28 +47,24 @@ public class CharacterViewController implements Initializable {
     @FXML
     private StackPane nameBox;
     @FXML
-    private Button statsButton;
-    @FXML
-    private Button transformationsButton;
-    @FXML
     private Button newCharacterButton;
     @FXML
     private Button deleteCharacterButton;
+    @FXML
+    private Button moveUpCharacterButton;
+    @FXML
+    private Button moveDownCharacterButton;
     @FXML
     private Button exportCharacterSpritesButton;
     @FXML
     private Button importCharacterSpritesButton;
     @FXML
-    private AnchorPane subView;
-
-    private enum SubViewSelection {
-        STATS,
-        TRANSFORMATIONS;
-    }
+    private AnchorPane statsSubViewContainer;
+    @FXML
+    private AnchorPane transformationsSubViewContainer;
 
     private int characterSelection = 0;
     private NameUpdater nameUpdater;
-    private SubViewSelection subViewSelection = SubViewSelection.STATS;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -87,7 +83,7 @@ public class CharacterViewController implements Initializable {
         initializeCharacterSelectionListView();
         initializeNameBox();
         refreshButtons();
-        initializeSubView();
+        initializeSubViews();
     }
 
     private void initializeCharacterButtons() {
@@ -103,6 +99,20 @@ public class CharacterViewController implements Initializable {
                 characterSelection = numberOfRemainingCharacters - 1;
             }
             refreshAll();
+        });
+        moveUpCharacterButton.setOnAction(e -> {
+            if (characterSelection > 0) {
+                appState.getCardData().swapCharacters(characterSelection, characterSelection - 1);
+                characterSelection--;
+                refreshAll();
+            }
+        });
+        moveDownCharacterButton.setOnAction(e -> {
+            if (characterSelection < appState.getCardData().getCharacters().size() - 1) {
+                appState.getCardData().swapCharacters(characterSelection, characterSelection + 1);
+                characterSelection++;
+                refreshAll();
+            }
         });
         exportCharacterSpritesButton.setOnAction(e -> {
             spriteImageTranslator.exportCharacterSpriteSheet(appState.getCharacter(characterSelection));
@@ -122,7 +132,7 @@ public class CharacterViewController implements Initializable {
                     nameUpdater.cancel();
                 }
                 initializeNameBox();
-                initializeSubView();
+                initializeSubViews();
             }
         });
     }
@@ -184,40 +194,25 @@ public class CharacterViewController implements Initializable {
     }
 
     private void refreshButtons() {
-        if(subViewSelection == SubViewSelection.STATS) {
-            statsButton.setDisable(true);
-            transformationsButton.setDisable(false);
-        } else {
-            statsButton.setDisable(false);
-            transformationsButton.setDisable(true);
-        }
-        statsButton.setOnAction(e -> {
-            subViewSelection = SubViewSelection.STATS;
-            initializeSubView();
-            refreshButtons();
-        });
-        transformationsButton.setOnAction(e -> {
-            subViewSelection = SubViewSelection.TRANSFORMATIONS;
-            initializeSubView();
-            refreshButtons();
-        });
         newCharacterButton.setDisable(appState.getCardData().getCharacters().size() >= appState.getCardData().getNumberOfAvailableCharacterSlots());
         deleteCharacterButton.setDisable(appState.getCardData().getCharacters().size() == 1);
+        moveUpCharacterButton.setDisable(characterSelection <= 0);
+        moveDownCharacterButton.setDisable(characterSelection >= appState.getCardData().getCharacters().size() - 1);
     }
 
-    private void initializeSubView() {
-        subView.getChildren().clear();
-        switch(subViewSelection) {
-            case STATS -> {
-                statsViewController.setCharacter(appState.getCharacter(characterSelection));
-                statsViewController.refreshAll();
-                subView.getChildren().add(statsSubView);
-            }
-            case TRANSFORMATIONS -> {
-                transformationViewController.setCharacter(appState.getCharacter(characterSelection));
-                transformationViewController.refreshAll();
-                subView.getChildren().add(transformationsSubView);
-            }
+    private void initializeSubViews() {
+        if(statsSubViewContainer != null && statsSubViewContainer.getChildren().isEmpty()) {
+            statsSubViewContainer.getChildren().add(statsSubView);
+        }
+        if(transformationsSubViewContainer != null && transformationsSubViewContainer.getChildren().isEmpty()) {
+            transformationsSubViewContainer.getChildren().add(transformationsSubView);
+        }
+        if (!appState.getCardData().getCharacters().isEmpty()) {
+            Character<?, ?> character = appState.getCharacter(characterSelection);
+            statsViewController.setCharacter(character);
+            statsViewController.refreshAll();
+            transformationViewController.setCharacter(character);
+            transformationViewController.refreshAll();
         }
     }
 
