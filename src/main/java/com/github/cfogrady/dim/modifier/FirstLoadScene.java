@@ -59,6 +59,7 @@ public class FirstLoadScene {
         try(FileInputStream fileInputStream = new FileInputStream(file)) {
             CardData<?, ?, ?> cardData = cardDataIO.readFromStream(fileInputStream, verifyChecksum);
             appState.setCardData(cardData);
+            appState.setLastOpenedFilePath(file);
             return true;
         } catch (IllegalStateException e) {
             log.warn("Checksum mismatch or invalid DIM: {}", e.getMessage());

@@ -18,6 +18,7 @@
          <children>
             <Button fx:id="openButton" mnemonicParsing="false" text="Open" />
             <Button fx:id="saveButton" mnemonicParsing="false" text="Save" />
+            <Button fx:id="saveAsButton" mnemonicParsing="false" text="Save As..." />
             <Text fx:id="dimIdText" strokeType="OUTSIDE" strokeWidth="0.0" text="DIM ID: 0" />
             <Text fx:id="revisionIdText" strokeType="OUTSIDE" strokeWidth="0.0" text="Revision: 0" />
             <Text fx:id="factoryDateText" strokeType="OUTSIDE" strokeWidth="0.0" text="Factory Date" />

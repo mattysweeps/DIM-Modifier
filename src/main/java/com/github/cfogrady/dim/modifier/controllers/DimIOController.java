@@ -27,10 +27,19 @@ public class DimIOController {
 
     public void openDim(Runnable onCompletion) {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select DIM File");
+        fileChooser.setTitle("Select DIM / BIN File");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("BIN Files (*.bin)", "*.bin"),
+                new FileChooser.ExtensionFilter("DIM Files (*.dim)", "*.dim"),
+                new FileChooser.ExtensionFilter("All Files (*.*)", "*.*")
+        );
+        if (appState.getLastOpenedFilePath() != null && appState.getLastOpenedFilePath().getParentFile() != null) {
+            fileChooser.setInitialDirectory(appState.getLastOpenedFilePath().getParentFile());
+        }
         File file = fileChooser.showOpenDialog(stage);
         if(file != null) {
             if (loadDimWithChecksumHandling(file)) {
+                appState.setLastOpenedFilePath(file);
                 onCompletion.run();
             }
         }
@@ -72,6 +81,21 @@ public class DimIOController {
     }
 
     public void saveDim() {
+        if (appState.getLastOpenedFilePath() != null) {
+            List<String> errors = appState.getCardData().checkForErrors();
+            if(!errors.isEmpty()) {
+                Alert alert = new Alert(Alert.AlertType.NONE, "Cannot save. Errors in card data:" + ERROR_SEPARATOR + String.join(ERROR_SEPARATOR, errors));
+                alert.getButtonTypes().add(ButtonType.OK);
+                alert.show();
+                return;
+            }
+            saveDimToFile(appState.getLastOpenedFilePath());
+        } else {
+            saveAsDim();
+        }
+    }
+
+    public void saveAsDim() {
         List<String> errors = appState.getCardData().checkForErrors();
         if(!errors.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.NONE, "Cannot save. Errors in card data:" + ERROR_SEPARATOR + String.join(ERROR_SEPARATOR, errors));
@@ -80,9 +104,23 @@ public class DimIOController {
             return;
         }
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Save DIM File As...");
+        fileChooser.setTitle("Save DIM / BIN File As...");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("BIN Files (*.bin)", "*.bin"),
+                new FileChooser.ExtensionFilter("DIM Files (*.dim)", "*.dim"),
+                new FileChooser.ExtensionFilter("All Files (*.*)", "*.*")
+        );
+        if (appState.getLastOpenedFilePath() != null) {
+            if (appState.getLastOpenedFilePath().getParentFile() != null) {
+                fileChooser.setInitialDirectory(appState.getLastOpenedFilePath().getParentFile());
+            }
+            fileChooser.setInitialFileName(appState.getLastOpenedFilePath().getName());
+        } else {
+            fileChooser.setInitialFileName("card.bin");
+        }
         File file = fileChooser.showSaveDialog(stage);
         if(file != null) {
+            appState.setLastOpenedFilePath(file);
             saveDimToFile(file);
         }
     }

@@ -40,6 +40,8 @@ public class LoadedViewController implements Initializable {
     @FXML
     private Button saveButton;
     @FXML
+    private Button saveAsButton;
+    @FXML
     private Text dimIdText;
     @FXML
     private Text revisionIdText;
@@ -102,6 +104,7 @@ public class LoadedViewController implements Initializable {
         });
         openButton.setOnAction(this::openButton);
         saveButton.setOnAction(e -> dimIOController.saveDim());
+        saveAsButton.setOnAction(e -> dimIOController.saveAsDim());
     }
 
     private void openButton(ActionEvent event) {
