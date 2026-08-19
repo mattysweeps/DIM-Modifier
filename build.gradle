@@ -70,10 +70,24 @@ abstract class WindowsBuildImageTask extends DefaultTask {
 //        command = "rcedit-x64.exe DIM-Modifier-" + version + ".exe --set-icon icon.ico"
 //        proc = command.execute()
 //        proc.waitForProcessOutput(System.out, System.err)
-        command = "\"C:\\Program Files (x86)\\Resource Hacker\\ResourceHacker.exe\"  -open DIM-Modifier-" + version + ".exe -save DIM-Modifier-" + version + ".exe -action addskip -res icon.ico -mask ICONGROUP,MAINICON"
-        proc = command.execute()
-        proc.waitForProcessOutput(System.out, System.err)
-
+        def rhFile = new File("C:\\Program Files (x86)\\Resource Hacker\\ResourceHacker.exe")
+        if (rhFile.exists()) {
+            def rhCommand = [
+                rhFile.absolutePath,
+                '-open', "DIM-Modifier-${version}.exe",
+                '-save', "DIM-Modifier-${version}.exe",
+                '-action', 'addskip',
+                '-res', 'icon.ico',
+                '-mask', 'ICONGROUP,MAINICON'
+            ]
+            proc = rhCommand.execute()
+            proc.waitForProcessOutput(System.out, System.err)
+            if (proc.exitValue() != 0) {
+                println "WARNING: Resource Hacker failed with exit code ${proc.exitValue()}"
+            }
+        } else {
+            println "WARNING: Resource Hacker not found at ${rhFile.absolutePath}. Skipping icon embedding."
+        }
     }
 }
 
