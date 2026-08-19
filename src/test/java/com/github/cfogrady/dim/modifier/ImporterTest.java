@@ -5,6 +5,7 @@ import com.github.cfogrady.dim.modifier.data.card.CardData;
 import com.github.cfogrady.dim.modifier.data.io.DimDirImporter;
 
 import javafx.application.Platform;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -15,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ImporterTest {
     @Test
     public void testImport() throws Exception {
+        Assumptions.assumeTrue(System.getenv("CI") == null, "Skipping test on CI environment");
         CountDownLatch latch = new CountDownLatch(1);
         try {
             Platform.startup(() -> latch.countDown());

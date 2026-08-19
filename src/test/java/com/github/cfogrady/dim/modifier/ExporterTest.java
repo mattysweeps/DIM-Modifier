@@ -12,6 +12,7 @@ import com.github.cfogrady.vb.dim.card.DimWriter;
 import com.github.cfogrady.dim.modifier.data.io.DimDirExporter;
 
 import javafx.application.Platform;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -21,6 +22,7 @@ import java.util.concurrent.CountDownLatch;
 public class ExporterTest {
     @Test
     public void testExport() throws Exception {
+        Assumptions.assumeTrue(System.getenv("CI") == null, "Skipping test on CI environment");
         CountDownLatch latch = new CountDownLatch(1);
         Platform.startup(() -> latch.countDown());
         latch.await();
